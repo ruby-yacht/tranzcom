@@ -17,6 +17,7 @@ let img;
 
 function preload() {
   classifier = ml5.imageClassifier('MobileNet');
+//  img = loadImage('http://ruby-yacht.github.io/images/bird.jpg');
   img = loadImage('images/bird.jpg');
 }
 
