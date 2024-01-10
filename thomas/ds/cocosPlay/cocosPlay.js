@@ -2,7 +2,7 @@ let img ;
 let detector;
 
 function preload(){
-img = loadImage('images/cat-dog3.jpeg');
+img = loadImage('images/livingroom2.jpeg');
 detector = ml5.objectDetector('');
 }
 
@@ -17,6 +17,11 @@ function gotDetections(error, results) {
       strokeWeight(5);
       noFill();
     rect(object.x, object.y, object.width, object.height);
+    noStroke();
+    fill(255,0,0);
+    textSize(36);
+    text(object.label, object.x + 10, object.y+45);
+    
     }
 }
 
