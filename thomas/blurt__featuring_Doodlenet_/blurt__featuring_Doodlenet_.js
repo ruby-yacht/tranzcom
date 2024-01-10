@@ -1,10 +1,12 @@
-let mobilenet;
+let doodlenet;
 let video;
 let lab = '';
 
+
+
 function modelReady() {
   console.log('Zee Mode-el iz ready, Boss');
-  mobilenet.classify(gotResults);
+  doodlenet.classify(gotResults);
   
 }
 
@@ -15,7 +17,7 @@ console.error(error);
 else {
 //console.log(results);
 lab = results[0].label;
-mobilenet.classify(gotResults);
+doodlenet.classify(gotResults);
 }
 }
 
@@ -28,7 +30,7 @@ video.hide();
 
 
 //create the image classifier object
-mobilenet = ml5.imageClassifier('DoodleNet', video, modelReady); 
+doodlenet = ml5.imageClassifier('DoodleNet', video, modelReady); 
 }
 
 
