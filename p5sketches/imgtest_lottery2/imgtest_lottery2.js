@@ -4,7 +4,6 @@ var choice = '1'; // starting choice, so it is not empty
 var screenbg = 250; // off white background
 var initials ='jm';
 
-
 function preload() {
 // preload() runs once, it may make you wait
 
