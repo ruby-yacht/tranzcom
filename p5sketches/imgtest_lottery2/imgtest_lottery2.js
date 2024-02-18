@@ -25,7 +25,7 @@ function preload() {
 
 
 function setup() {
-createCanvas(256*3, 600);  // canvas size
+createCanvas(256, 256*3);  // canvas size
 background(screenbg);   // use our background screen color
 
 }
@@ -41,9 +41,9 @@ function draw() {
    j=int(random(11));
    k=int(random(11));
   
-    image(img[i], 0, 128, 256, 256);
-    image(img[j], 256, 128, 256, 256);
-    image(img[k], 512, 128, 256, 256);
+    image(img[i], 0, 0, 256, 256);
+    image(img[j], 0, 256, 256, 256);
+    image(img[k], 0, 512, 256, 256);
     
   
     
