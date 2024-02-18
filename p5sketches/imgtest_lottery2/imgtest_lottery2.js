@@ -44,7 +44,12 @@ function draw() {
     image(img[j], 0, 256, 256, 256);
     image(img[k], 0, 512, 256, 256);
     
-  
+  if (mouseIsPressed === true) {
+    frameRate(1);
+  } else {
+    frameRate(5);
+  }
+    
     
   if (keyIsPressed){ 
       choice = key;
