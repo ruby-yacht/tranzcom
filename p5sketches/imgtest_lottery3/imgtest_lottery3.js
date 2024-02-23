@@ -70,12 +70,12 @@ function draw(){
       }
     }
   }
-  if (mouseIsPressed){
-    frameRate(.95);
+/*  if (mouseIsPressed){
+    frameRate(1);
   } else {
     frameRate(5);
     
-  }
+  }*/
 }
 
   
