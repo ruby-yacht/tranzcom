@@ -71,7 +71,7 @@ function draw(){
     }
   }
   if (mouseIsPressed){
-    frameRate(.08);
+    frameRate(.95);
   } else {
     frameRate(5);
     
