@@ -52,11 +52,11 @@ function setup() {
  frameRate(5);
 }
 
-function touchStarted() {
+/*function touchStarted() {
   wait(2500);
   
 } 
-
+*/
 function draw(){
   for(let i=0; i<numImgs; i++){
     for (let j=0; j<numImgs; j++){
