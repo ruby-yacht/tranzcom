@@ -34,7 +34,7 @@ function preload() {
     "https://ruby-yacht.github.io/tranzcom/p5sketches/images/157.png"
   );
   let img9 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/158.png"
+    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/159.png"
   );
   let img10 = loadImage(
     "https://ruby-yacht.github.io/tranzcom/p5sketches/images/200.png"
