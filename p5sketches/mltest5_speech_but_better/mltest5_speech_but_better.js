@@ -1,5 +1,3 @@
-// Copyright (c) 2019 ml5
-//
 // This software is released under the MIT License.
 // https://opensource.org/licenses/MIT
 
@@ -25,6 +23,7 @@ function setup() {
   // Initialize the Image Classifier method with MobileNet and the video as the second argument
   classifier = ml5.imageClassifier('MobileNet', video, modelReady);
   const filePath = 'logged_res_labels.txt';
+//  frameRate(1);
 }
 
 function modelReady() {
@@ -32,11 +31,22 @@ function modelReady() {
   select('#status').html('Model Loaded');
   // Call the classifyVideo function to start classifying the video
   classifyVideo();
+ 
 }
 
 // Get a prediction for the current video frame
 function classifyVideo() {
   classifier.classify(gotResult);
+}
+
+function wait(time)
+{
+  start = millis()
+  do
+  {
+    current = millis();
+  }
+  while(current < start + time)
 }
 
 function saveDataToFile() {
@@ -84,7 +94,7 @@ function gotResult(err, results) {
   //saveDataToFile();
   
   
-  
+   wait(1000);
   classifyVideo();
 }
 
