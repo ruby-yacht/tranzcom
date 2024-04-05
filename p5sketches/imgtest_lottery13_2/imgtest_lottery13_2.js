@@ -6,47 +6,47 @@ let numbers = []; // Array to store the numbers
 //LOAD IMAGES BEFORE THE PROGRAM RUNS
 function preload() {
   //least efficient way, but most straightforward way
-  let img0 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/412.png"
-  );
   let img1 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/433.png"
+    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/01-eye.jpg"
   );
   let img2 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/198.png"
+    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/02-life.jpg"
   );
   let img3 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/153.png"
+    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/03-triangle.jpg"
   );
   let img4 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/156.png"
+    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/04-sun.jpg"
   );
   let img5 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/158.png"
+    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/05-mercury.jpg"
   );
   let img6 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/154.png"
+    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/06-venus.jpg"
   );
   let img7 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/155.png"
+    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/07-moon.jpg"
   );
   let img8 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/157.png"
+    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/08-mars.jpg"
   );
   let img9 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/159.png"
+    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/09-jupiter.jpg"
   );
   let img10 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/200.png"
+    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/10-saturn.jpg"
   );
   let img11 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/419.png"
+    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/11-hour.jpg"
   );
-    let img12 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/1400.png"
+  let img12 = loadImage(
+    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/12-symmetry.jpg"
+  );
+    let img13 = loadImage(
+    "https://ruby-yacht.github.io/tranzcom/p5sketches/images/13-infinity.jpg"
   );
   
-  imgs = [img0, img1, img2, img3, img4, img5, img6, img7, img8, img9, img10, img11, img12];
+  imgs = [img1, img2, img3, img4, img5, img6, img7, img8, img9, img10, img11, img12, img13];
 
  
 }
@@ -69,7 +69,7 @@ function setup() {
   button.mousePressed(displayArray);*/
   
       for ( let i=0; i < 5; i++) {
-        image(imgs[numbers[i]-1], 0, i*256);   
+        image(imgs[numbers[i]-1], 0, i*256, 182, 256);   
     }
   
   //Display array
