@@ -15,28 +15,78 @@ let video;
 const myVoice = new p5.Speech();
 // defined as global to get ALL data in a session
 let data = {}
+//document.getElementById("start_stream").addEventListener("Click", run_cam);
+let stream_status = false;
 
 function setup() {
-  noCanvas();
+  //noCanvas();
+  createCanvas(600, 400);
+
+  //background(200);
+  let start_button = createButton('~ Tap into the spirit ~');
+  let download_button = createButton('Oh divine mother, tell me what you see!');
+  let stop_button = createButton('~ Sever Divine Connection ~');
+  
   // Create a camera input
   video = createCapture(VIDEO);
+  video.position(50, 250);
+  console.log ("VIDEO WIDTH HEIGHT: ", video.width, video.height);
+  
+  // NOTE: because video is 300x150; therefore, the end X_positionxY_position of it is 350x500
+  start_button.position(725, 425);
+  download_button.position(725, 450);
+  stop_button.position(725, 475);
+  
+  
+  start_button.mousePressed(run_cam);
+  describe("A gray button that runs turns on the camera feed for analyzing the symbols seen by camera's video feed.");
+  download_button.mousePressed(saveDataToFile);
+  describe("A gray button that downloads a file containing what the camera has seen so far...");
+  stop_button.mousePressed(stop_cam);
+  describe("A gray button that stops the camera feed and resets the data");
+  
+  
+  
+}
+
+function run_cam(){
+  stream_status = true;
+  data = {}
+  console.log("running camera!!!!")
   // Initialize the Image Classifier method with MobileNet and the video as the second argument
   classifier = ml5.imageClassifier('MobileNet', video, modelReady);
   const filePath = 'logged_res_labels.txt';
 //  frameRate(1);
+
 }
 
 function modelReady() {
   // Change the status of the model once its ready
   select('#status').html('Model Loaded');
   // Call the classifyVideo function to start classifying the video
+  //startLoop()
+  //while (stream_status){
   classifyVideo();
+    
+  //}
+  
  
+}
+
+// Function to start the loop
+function startLoop() {
+    // Run the loop until the stream status is true
+    var loopInterval = setInterval(function() {
+        if (!stream_status) {
+            clearInterval(loopInterval); // Stop the loop
+        }
+        classifier.classify(gotResult) // Call the function
+    }, 100); // Run every 1 second (adjust the interval as needed)
 }
 
 // Get a prediction for the current video frame
 function classifyVideo() {
-  classifier.classify(gotResult);
+  startLoop();
 }
 
 function wait(time)
@@ -50,6 +100,7 @@ function wait(time)
 }
 
 function saveDataToFile() {
+  console.log ("DOWNLOADING DATA...")
   var dict_as_str = JSON.stringify(data);
   var blob = new Blob ([dict_as_str], {type: 'text/plain'});
   
@@ -87,16 +138,22 @@ function gotResult(err, results) {
       data[results[i]['label']] = 1;
     }
   }
-  myVoice.speak(`I see ${results[0].label}`);
-  
+  if (stream_status){
+    myVoice.speak(`I see ${results[0].label}`);
+  }
   //sessionStorage approach
   //sessionStorage.setItem('data', JSON.stringify(data));
   //saveDataToFile();
   
   
-   wait(1000);
+   wait(500);
   classifyVideo();
 }
 
-// Call every 30 seconds!
-  setInterval(saveDataToFile, 30000);
+function stop_cam() {
+  console.log("CAMERA STOPPED!");
+  stream_status = false;
+  classifier = undefined;
+  myVoice.speak(``);
+  
+}
