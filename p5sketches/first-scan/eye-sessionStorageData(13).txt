@@ -1,0 +1,1 @@
+{"water bottle":8,"knot":290,"stethoscope":120,"whistle":138,"bolo tie, bolo, bola tie, bola":163,"pick, plectrum, plectron":20,"microphone, mike":34,"coil, spiral, volute, whorl, helix":25,"analog clock":4,"pillow":16,"rubber eraser, rubber, pencil eraser":9,"iron, smoothing iron":3,"hook, claw":6,"hair slide":13,"bathing cap, swimming cap":9,"stopwatch, stop watch":177}
