@@ -50,7 +50,7 @@ function preload() {
 
 function setup() {
 //  createCanvas(768, 256*5);
- createCanvas(cWidth*5, cHeight); //what is phone size for 3-5-5
+ createCanvas(cWidth*5, cHeight*3); //what is phone size for 3-5-5
  background(250);
  noLoop(); // We don't need continuous animation
 // Initialize the numbers array with 1 to 13 -these are card pointers
@@ -58,15 +58,13 @@ function setup() {
     numbers.push(i);
  }
 // Shuffle the numbers array
- shuffleArray(numbers);  // this is where we would use ml5.js to select the order
+ 
+shuffleArray(numbers);  // this is where we would use ml5.js to select the order
 
- 
-// for ( let i=0; i < 5; i++) {
-//     image(imgs[numbers[i]-1], i*208, 0, 182, 256);   
-// }
- 
- displayReading3(numbers);
-  
+displayReading355(numbers); //this really should not be in setup
+
+// displayReading3(numbers);  //shows first 3 cards
+//displayReading355(numbers); //shows all 13 cards 3 rows 3, 5, 5
 //    displayArray(); //Display array to verify shuffle
 } //end setup
 
@@ -80,14 +78,13 @@ function shuffleArray(arr) { // this will do a basic shuffle on the array
     // Swap elements
     [arr[currentIndex], arr[randomIndex]] = [arr[randomIndex], arr[currentIndex]];
   }
-}
+} // end shuffleArray
 
 function displayArray() { // this will display all 13 cards as text
 // make this not rely on numImages but detect it
   textSize(32);
   textAlign(LEFT, CENTER);
   let yPos = 40;
-
   for (let i = 0; i < numImgs; i++) {
     text(`Card ${i + 1}: ${numbers[i]}`, 300, yPos);
     yPos += 40;
@@ -96,14 +93,26 @@ function displayArray() { // this will display all 13 cards as text
 
 function displayReading3(arr) { //display 
  for ( let i=0; i < 3; i++) {
-     image(imgs[arr[i]-1], i*208, 0, 208, 300);   
+     image(imgs[arr[i]-1], i*cWidth+cWidth, cHeight, cWidth, cHeight);   
  }
-  
-}  
+}  // end displayReading3
+
+function displayReading355(arr) { //display 
+ for ( let i=0; i < 3; i++) {
+     image(imgs[arr[i]-1], i*cWidth+cWidth, 0, cWidth, cHeight);   
+ }
+  for ( let i=3; i < 8; i++) {
+     image(imgs[arr[i]-1], (i-3)*cWidth, cHeight, 0, cHeight);   
+ }
+   for ( let i=8; i < 13; i++) {
+     image(imgs[arr[i]-1], (i-8)*cWidth, cHeight*2, 0, cHeight);   
+ }
+ 
+}  // end displayReading355
 
 function draw(){
 // nothing to execute at the framerate : )  
 
-}
+}// end draw
 
   
