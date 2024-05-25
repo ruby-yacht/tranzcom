@@ -7,43 +7,43 @@ let numbers = []; // Array to store the numbers
 function preload() {
   //least efficient way, but most straightforward way
   let img1 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/sigil-sm/01-eye.jpg"
+    "https://ruby-yacht.github.io/tranzcom/sigil-sm/01-eye.png"
   );
   let img2 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/sigil-sm/02-life.jpg"
+    "https://ruby-yacht.github.io/tranzcom/sigil-sm/02-life.png"
   );
   let img3 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/sigil-sm/03-triangle.jpg"
+    "https://ruby-yacht.github.io/tranzcom/sigil-sm/03-triangle.png"
   );
   let img4 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/sigil-sm/04-sun.jpg"
+    "https://ruby-yacht.github.io/tranzcom/sigil-sm/04-sun.png"
   );
   let img5 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/sigil-sm/05-mercury.jpg"
+    "https://ruby-yacht.github.io/tranzcom/sigil-sm/05-mercury.png"
   );
   let img6 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/sigil-sm/06-venus.jpg"
+    "https://ruby-yacht.github.io/tranzcom/sigil-sm/06-venus.png"
   );
   let img7 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/sigil-sm/07-moon.jpg"
+    "https://ruby-yacht.github.io/tranzcom/sigil-sm/07-moon.png"
   );
   let img8 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/sigil-sm/08-mars.jpg"
+    "https://ruby-yacht.github.io/tranzcom/sigil-sm/08-mars.png"
   );
   let img9 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/sigil-sm/09-jupiter.jpg"
+    "https://ruby-yacht.github.io/tranzcom/sigil-sm/09-jupiter.png"
   );
   let img10 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/sigil-sm/10-saturn.jpg"
+    "https://ruby-yacht.github.io/tranzcom/sigil-sm/10-saturn.png"
   );
   let img11 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/sigil-sm/11-hour.jpg"
+    "https://ruby-yacht.github.io/tranzcom/sigil-sm/11-hour.png"
   );
   let img12 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/sigil-sm/12-symmetry.jpg"
+    "https://ruby-yacht.github.io/tranzcom/sigil-sm/12-symmetry.png"
   );
     let img13 = loadImage(
-    "https://ruby-yacht.github.io/tranzcom/sigil-sm/13-infinity.jpg"
+    "https://ruby-yacht.github.io/tranzcom/sigil-sm/13-infinity.png"
   );
   
   imgs = [img1, img2, img3, img4, img5, img6, img7, img8, img9, img10, img11, img12, img13];
@@ -52,7 +52,9 @@ function preload() {
 }
 
 function setup() {
-  createCanvas(768, 256*5);
+//  createCanvas(768, 256*5);
+  createCanvas(208*5, 256);
+
   background(250);
   // frameRate(5);
    noLoop(); // We don't need continuous animation
@@ -61,19 +63,14 @@ function setup() {
     numbers.push(i);
   }
   // Shuffle the array
-  shuffleArray(numbers);  
+  shuffleArray(numbers);  // this is where we would use ml5.js to select the order
   
-    // Create a button
- /* let button = createButton("Show Array");
-  button.position(10, height - 40);
-  button.mousePressed(displayArray);*/
+  for ( let i=0; i < 5; i++) {
+        image(imgs[numbers[i]-1], i*208, 0, 182, 256);   
+   }
   
-      for ( let i=0; i < 5; i++) {
-        image(imgs[numbers[i]-1], 0, i*256, 182, 256);   
-    }
-  
-  //Display array
-     displayArray();
+ //Display array to verify shuffle
+ //    displayArray();
   }
 
 function shuffleArray(arr) {
@@ -104,7 +101,7 @@ function draw(){
   
 
 /*    for ( let i=0; i < 5; i++) {
-        image(imgs[numbers[i]-1], 0, i*256);   
+        image(imgs[numbers[i]-1], i*210, 0);   
     }*/
         
 
