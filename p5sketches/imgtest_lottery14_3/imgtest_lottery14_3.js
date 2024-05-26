@@ -52,7 +52,7 @@ function preload() {
 function setup() {
  createCanvas(cWidth*5, cHeight*3); 
  background(250);
- 
+ frameRate(5);
 // Initialize the numbers array with 1 to 13 -these are card pointers
  for (let i = 1; i <= numImgs; i++) {
     numbers.push(i);
@@ -73,10 +73,12 @@ function shuffleArray(arr) { // this will do a basic shuffle on the array
 } // end shuffleArray
 
 function shuffleOne(arr,index) { // this will do a basic shuffle on the array
-  let currentIndex = arr.length;
+  let currentSize = arr.length;
+//  print(currentSize);
   let randomIndex;
-    randomIndex = floor(random(currentIndex));
-    currentIndex--;
+    randomIndex = floor(random(currentSize));
+    print(randomIndex);
+    currentSize--;
     // Swap elements
     [arr[index], arr[randomIndex]] = [arr[randomIndex], arr[index]];
 } // end shuffleArray
@@ -126,23 +128,15 @@ displayReading355(numbers);
 //displayArray(numbers);
 //shuffleArray(numbers);
 
-if (cnt>12){
+if (cnt>11){
   cnt=0;
-}else {cnt++;
-wait(100); 
-
+}else {
+  print(cnt);
+  cnt++;
 }
   
-  
-  
-shuffleOne(numbers,i);
+shuffleOne(numbers,cnt);
 wait(100);
-
-
-
-//displayReading355(numbers);
-
-
 
 }// end draw
 
