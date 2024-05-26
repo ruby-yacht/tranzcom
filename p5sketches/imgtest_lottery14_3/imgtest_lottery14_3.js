@@ -50,7 +50,9 @@ function preload() {
 }// end preload
 
 function setup() {
- createCanvas(cWidth*5, cHeight*3); 
+// createCanvas(cWidth*5, cHeight*3); 
+ createCanvas(windowWidth, windowHeight); // set up a scaling variable to get 5 across and 3 verticle
+ 
  background(250);
  frameRate(5);
 // Initialize the numbers array with 1 to 13 -these are card pointers
