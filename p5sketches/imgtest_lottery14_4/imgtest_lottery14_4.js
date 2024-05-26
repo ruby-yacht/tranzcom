@@ -5,6 +5,7 @@ let numbers = []; // Array to store the indicies to images, we'll shuffle this o
 let cWidth=208, cHeight=300; // from https://ruby-yacht.github.io/tranzcom/sigil-sm/
 let cnt=0;
 
+
 function preload() {
   //least efficient, but most straightforward way
   let img1 = loadImage(
@@ -52,9 +53,12 @@ function preload() {
 function setup() {
 // createCanvas(cWidth*5, cHeight*3); 
  createCanvas(windowWidth, windowHeight); // set up a scaling variable to get 5 across and 3 verticle
- 
+ cWidth=windowWidth/5;
+ cHeight=windowHeight/3;
  background(250);
  frameRate(5);
+ 
+ 
 // Initialize the numbers array with 1 to 13 -these are card pointers
  for (let i = 1; i <= numImgs; i++) {
     numbers.push(i);
