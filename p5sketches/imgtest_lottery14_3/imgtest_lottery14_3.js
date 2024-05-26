@@ -1,11 +1,12 @@
 
 let imgs = []; // CREATE AN EMPTY ARRAY TO STORE IMAGES
 let numImgs = 13;
-let numbers = []; // Array to store the numbers
+let numbers = []; // Array to store the indicies to images, we'll shuffle this one
 let cWidth=208, cHeight=300; // from https://ruby-yacht.github.io/tranzcom/sigil-sm/
+let cnt=0;
 
 function preload() {
-  //least efficient way, but most straightforward way
+  //least efficient, but most straightforward way
   let img1 = loadImage(
     "https://ruby-yacht.github.io/tranzcom/sigil-sm/01-eye.png"
   );
@@ -49,44 +50,53 @@ function preload() {
 }// end preload
 
 function setup() {
-//  createCanvas(768, 256*5);
- createCanvas(cWidth*5, cHeight*3); //what is phone size for 3-5-5
+ createCanvas(cWidth*5, cHeight*3); 
  background(250);
- noLoop(); // We don't need continuous animation
+ 
 // Initialize the numbers array with 1 to 13 -these are card pointers
  for (let i = 1; i <= numImgs; i++) {
     numbers.push(i);
  }
-// Shuffle the numbers array
- 
-shuffleArray(numbers);  // this is where we would use ml5.js to select the order
-
-displayReading355(numbers); //this really should not be in setup
-
-//displayReading3(numbers);  //shows first 3 cards
-//displayReading355(numbers); //shows all 13 cards 3 rows 3, 5, 5
-//    displayArray(); //Display array to verify shuffle
 } //end setup
 
 function shuffleArray(arr) { // this will do a basic shuffle on the array
   let currentIndex = arr.length;
   let randomIndex;
-
   while (currentIndex > 0) {
     randomIndex = floor(random(currentIndex));
     currentIndex--;
     // Swap elements
     [arr[currentIndex], arr[randomIndex]] = [arr[randomIndex], arr[currentIndex]];
+//       displayReading355(arr); 
+//      wait(10);
   }
 } // end shuffleArray
 
-function displayArray() { // this will display all 13 cards as text
-// make this not rely on numImages but detect it
+function shuffleOne(arr,index) { // this will do a basic shuffle on the array
+  let currentIndex = arr.length;
+  let randomIndex;
+    randomIndex = floor(random(currentIndex));
+    currentIndex--;
+    // Swap elements
+    [arr[index], arr[randomIndex]] = [arr[randomIndex], arr[index]];
+} // end shuffleArray
+
+function wait(time) {
+  start = millis()
+  do
+  {
+    current = millis();
+  }
+  while(current < start + time)
+} // end wait
+
+function displayArray(arr) { // this will display all 13 cards as numerical values
+  let currentLength = arr.length;
   textSize(32);
   textAlign(LEFT, CENTER);
   let yPos = 40;
-  for (let i = 0; i < numImgs; i++) {
-    text(`Card ${i + 1}: ${numbers[i]}`, 300, yPos);
+  for (let i = 0; i < currentLength; i++) {
+    text(`Card ${i + 1}: ${numbers[i]}`, 850, yPos);
     yPos += 40;
   }
 } //end displayArray 
@@ -111,7 +121,28 @@ function displayReading355(arr) { //display
 }  // end displayReading355
 
 function draw(){
-// nothing to execute at the framerate : )  
+//shuffleArray(numbers);  
+displayReading355(numbers); 
+//displayArray(numbers);
+//shuffleArray(numbers);
+
+if (cnt>12){
+  cnt=0;
+}else {cnt++;
+wait(100); 
+
+}
+  
+  
+  
+shuffleOne(numbers,i);
+wait(100);
+
+
+
+//displayReading355(numbers);
+
+
 
 }// end draw
 
