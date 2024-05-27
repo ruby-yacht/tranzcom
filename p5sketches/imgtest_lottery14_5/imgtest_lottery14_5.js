@@ -56,7 +56,7 @@ function setup() {
  cWidth=windowWidth/5;
  cHeight=windowHeight/3;
  background(250);
- frameRate(5);
+ frameRate(1);
  
  
 // Initialize the numbers array with 1 to 13 -these are card pointers
@@ -87,7 +87,7 @@ function shuffleOne(arr,index) { // this will do a basic shuffle on the array
     currentSize--;
     // Swap elements
     [arr[index], arr[randomIndex]] = [arr[randomIndex], arr[index]];
-} // end shuffleArray
+} // end shuffleOne
 
 function wait(time) {
   start = millis()
@@ -100,6 +100,7 @@ function wait(time) {
 
 function displayArray(arr) { // this will display all 13 cards as numerical values
   let currentLength = arr.length;
+  background(250);
   textSize(32);
   textAlign(LEFT, CENTER);
   let yPos = 40;
@@ -143,14 +144,14 @@ displayReading3(numbers);
 if (cnt>11){
   cnt=0;
 }else {
-  print(cnt);
+//  print(cnt);
   cnt++;
 }
   
 shuffleOne(numbers,cnt);
-print(numbers);
+//print(numbers);
 displayArray(numbers);
-wait(100);
+//wait(100);
 
 }// end draw
 
