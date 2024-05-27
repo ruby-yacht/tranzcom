@@ -130,7 +130,13 @@ function displayReading355(arr) { //display
 
 function draw(){
 //shuffleArray(numbers);  
+
+
 displayReading3(numbers); 
+
+
+
+//displayReading355(numbers); 
 //displayArray(numbers);
 //shuffleArray(numbers);
 
@@ -142,6 +148,8 @@ if (cnt>11){
 }
   
 shuffleOne(numbers,cnt);
+print(numbers);
+displayArray(numbers);
 wait(100);
 
 }// end draw
