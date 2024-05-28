@@ -125,7 +125,7 @@ function overlap_indicator(cards_list){
 
 function hijacker(results) {
   // must ensure none of these overlap!!!
-  let eye_label_nums = [451, 616, 823, 826, 902, ];
+  let eye_label_nums = [451, 616, 823, 826, 902];
   let life_label_nums = [111, 438, 714, 767, 783, 968];
   let triangle_label_nums = [409, 613, 659, 872, 892, 920];
   let cards_list = [eye_label_nums, life_label_nums, triangle_label_nums]
