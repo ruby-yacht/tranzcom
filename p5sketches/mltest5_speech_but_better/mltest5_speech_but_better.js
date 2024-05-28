@@ -119,10 +119,47 @@ function saveDataToFile() {
   
 }
 
+function overlap_indicator(cards_list){
+  // function to check if any lists have overlapping 
+}
+
+function hijacker(results) {
+  // must ensure none of these overlap!!!
+  let eye_label_nums = [451, 616, 823, 826, 902];
+  let life_label_nums = [111, 438, 714, 767, 783, 968];
+  let triangle_label_nums = [409, 613, 659, 872, 892, 920];
+  let cards_list = [eye_label_nums, life_label_nums, triangle_label_nums]
+  
+  overlap_indicator(cards_list)
+  
+  if (eye_label_nums.includes(results[0].label)){
+    return 'eye'
+  }
+  else if (life_label_nums.includes(results[0].label)){
+    return 'life'
+  }
+  else if (triangle_label_nums.includes(results[0].label)){
+    return 'triangle'
+  }
+  else{
+    if (results[0].label < 333){
+      return 'eye'
+    }
+    else if (results[0].label < 666){
+      return 'life'
+    }
+    else{
+      return 'triangle'
+    }
+  }
+}
+
 // When we get a result
 function gotResult(err, results) {
   // The results are in an array ordered by confidence.
-  select('#result').html(results[0].label);
+  let hijack = hijacker(results);
+  //select('#result').html(results[0].label);
+  select('#result').html(hijack);
   select('#probability').html(nf(results[0].confidence, 0, 2));
   //console.log(results[:]['label'])
   
@@ -131,15 +168,23 @@ function gotResult(err, results) {
   
   for (let i = 0; i < results.length; i++)  {
     //console.log(results[i]['label'])
-    if (data.hasOwnProperty(results[i]['label'])){
-      data[results[i]['label']]++;
+    // OLD IF-ELSE
+    //if (data.hasOwnProperty(results[i]['label'])){
+    //  data[results[i]['label']]++;
+    //}
+    //else{
+    //  data[results[i]['label']] = 1;
+    //}
+    // NEW IF-ELSE
+    if (data.hasOwnProperty(hijack)){
+      data[hijack]++;
     }
     else{
-      data[results[i]['label']] = 1;
+      data[hijacker] = 1;
     }
   }
   if (stream_status){
-    myVoice.speak(`I see ${results[0].label}`);
+    myVoice.speak(`I see ${hijack}`);
   }
   //sessionStorage approach
   //sessionStorage.setItem('data', JSON.stringify(data));
