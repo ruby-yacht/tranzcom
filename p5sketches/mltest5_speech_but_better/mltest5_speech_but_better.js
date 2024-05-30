@@ -17,15 +17,21 @@ const myVoice = new p5.Speech();
 let data = {}
 //document.getElementById("start_stream").addEventListener("Click", run_cam);
 let stream_status = false;
+let is_quick = false;
+let is_sequential = false;
+let logged_cards = new Set();
 
 function setup() {
   //noCanvas();
   createCanvas(600, 400);
 
   //background(200);
+  
+  let quick_read_button = createButton('Button 1');
+  let sequential_read_button = createButton('Button 3');
   let start_button = createButton('~ Tap into the spirit ~');
-  let download_button = createButton('Oh divine mother, tell me what you see!');
   let stop_button = createButton('~ Sever Divine Connection ~');
+  let download_button = createButton('Oh divine mother, tell me what you see!');
   
   // Create a camera input
   video = createCapture(VIDEO);
@@ -33,11 +39,16 @@ function setup() {
   console.log ("VIDEO WIDTH HEIGHT: ", video.width, video.height);
   
   // NOTE: because video is 300x150; therefore, the end X_positionxY_position of it is 350x500
-  start_button.position(725, 425);
-  download_button.position(725, 450);
-  stop_button.position(725, 475);
+  quick_read_button.position(725, 425);
+  sequential_read_button.position(725, 450);
+  start_button.position(725, 475);
+  download_button.position(725, 500);
+  stop_button.position(725, 525);
   
-  
+  quick_read_button.mousePressed(run_cam_1);
+  describe("A gray button that runs turns on the camera feed for analyzing the symbols seen by camera's video feed.");
+  sequential_read_button.mousePressed(run_cam_3);
+  describe("A gray button that runs turns on the camera feed for analyzing the symbols seen by camera's video feed.");  
   start_button.mousePressed(run_cam);
   describe("A gray button that runs turns on the camera feed for analyzing the symbols seen by camera's video feed.");
   download_button.mousePressed(saveDataToFile);
@@ -47,6 +58,17 @@ function setup() {
   
   
   
+}
+
+function run_cam_1(){
+  is_quick = true;
+  run_cam();
+}
+
+function run_cam_3(){
+  is_sequential = true;
+  run_cam();
+
 }
 
 function run_cam(){
@@ -119,6 +141,11 @@ function saveDataToFile() {
   
 }
 
+function card_logger(card_val){
+  logged_cards.add(card_val)
+  console.log("Detected card: ", card_val)
+}
+
 function overlap_indicator(cards_list){
   // function to check if any lists have overlapping 
 }
@@ -130,7 +157,7 @@ function hijacker(results) {
   let triangle_label_nums = [409, 613, 659, 872, 892, 920];
   let cards_list = [eye_label_nums, life_label_nums, triangle_label_nums]
   
-  overlap_indicator(cards_list)
+  //overlap_indicator(cards_list)
   
   if (eye_label_nums.includes(results[0].label)){
     return 'eye'
@@ -154,6 +181,12 @@ function hijacker(results) {
   }
 }
 
+function list_printer(results){
+  for (i = 0; i < results.length; i){
+    console.log(results[i].label + ' - ' + results[i].confidence + '\n');
+  }
+}
+
 // When we get a result
 function gotResult(err, results) {
   // The results are in an array ordered by confidence.
@@ -165,6 +198,8 @@ function gotResult(err, results) {
   
   //let data = {};
   
+  //list_printer(results);
+  //console.log('results size: ' + results.length + "\n")
   
   for (let i = 0; i < results.length; i++)  {
     //console.log(results[i]['label'])
@@ -190,15 +225,29 @@ function gotResult(err, results) {
   //sessionStorage.setItem('data', JSON.stringify(data));
   //saveDataToFile();
   
+  logged_cards.add(hijack);
+  console.log('Logged card: ' + hijack + '\n');
   
-   wait(500);
+  mySet.forEach(function(value) {
+    console.log('\nLogged cards: ' + value + '\n');
+  });
+  
+  if (is_quick && logged_cards.size > 0){
+    stop_cam();
+  }
+  if (is_sequential && (logged_cards.size == cards_list.length)) {
+    stop_cam();
+  }
+  
+  wait(500);
   classifyVideo();
 }
 
 function stop_cam() {
   console.log("CAMERA STOPPED!");
   stream_status = false;
+  is_quick = false;
+  is_sequential = false;
   classifier = undefined;
   myVoice.speak(``);
-  
 }
