@@ -20,6 +20,7 @@ let stream_status = false;
 let is_quick = false;
 let is_sequential = false;
 let logged_cards = new Set();
+let cards_lsit = [];
 
 function setup() {
   //noCanvas();
@@ -42,30 +43,32 @@ function setup() {
   quick_read_button.position(725, 425);
   sequential_read_button.position(725, 450);
   start_button.position(725, 475);
-  download_button.position(725, 500);
-  stop_button.position(725, 525);
+  stop_button.position(725, 500);
+  download_button.position(725, 525);
   
   quick_read_button.mousePressed(run_cam_1);
-  describe("A gray button that runs turns on the camera feed for analyzing the symbols seen by camera's video feed.");
+  describe("A gray button that runs turns on the camera feed for analyzing the first symbol it sees.");
   sequential_read_button.mousePressed(run_cam_3);
-  describe("A gray button that runs turns on the camera feed for analyzing the symbols seen by camera's video feed.");  
+  describe("A gray button that runs turns on the camera feed for analyzing the entire deck.");  
   start_button.mousePressed(run_cam);
   describe("A gray button that runs turns on the camera feed for analyzing the symbols seen by camera's video feed.");
-  download_button.mousePressed(saveDataToFile);
-  describe("A gray button that downloads a file containing what the camera has seen so far...");
   stop_button.mousePressed(stop_cam);
   describe("A gray button that stops the camera feed and resets the data");
+  download_button.mousePressed(saveDataToFile);
+  describe("A gray button that downloads a file containing what the camera has seen so far...");
   
   
   
 }
 
 function run_cam_1(){
+  console.log('STARTED: quick reading')
   is_quick = true;
   run_cam();
 }
 
 function run_cam_3(){
+  console.log('STARTED: sequential reading')
   is_sequential = true;
   run_cam();
 
@@ -150,14 +153,21 @@ function overlap_indicator(cards_list){
   // function to check if any lists have overlapping 
 }
 
+function getKeyByVal(obj, value){
+  return Object.keys(obj).find(key => obj[key] === value);
+}
+
 function hijacker(results) {
   // must ensure none of these overlap!!!
   let eye_label_nums = [451, 616, 823, 826, 902];
   let life_label_nums = [111, 438, 714, 767, 783, 968];
   let triangle_label_nums = [409, 613, 659, 872, 892, 920];
-  let cards_list = [eye_label_nums, life_label_nums, triangle_label_nums]
+  cards_list = [eye_label_nums, life_label_nums, triangle_label_nums]
   
+  //label_num = getKeyByVal(M, results[0].label)
   //overlap_indicator(cards_list)
+  //console.log('LABEL NUM: ' + label_num + '\n');
+  //console.log('TYPE OF LABEL_NUM VALUE: ' + typeof label_num + '\n');
   
   if (eye_label_nums.includes(results[0].label)){
     return 'eye'
@@ -190,10 +200,22 @@ function list_printer(results){
 // When we get a result
 function gotResult(err, results) {
   // The results are in an array ordered by confidence.
-  let hijack = hijacker(results);
-  //select('#result').html(results[0].label);
-  select('#result').html(hijack);
-  select('#probability').html(nf(results[0].confidence, 0, 2));
+  results = results || [];
+  
+  // NOTE: uncomment for checking result array values
+  //results.forEach(function(value) {
+  //  console.log('\nRESULTS VALUE\n label: ' + value.label + ' - ' + value.confidence + '\n');
+  //});
+  
+  console.log("results type: " + typeof results+ '\n')
+  let hijack = ''
+  if (results.length > 0){
+    hijack = hijacker(results);
+    //select('#result').html(results[0].label);
+    select('#result').html(hijack);
+    select('#probability').html(nf(results[0].confidence, 0, 2));
+  
+  }
   //console.log(results[:]['label'])
   
   //let data = {};
@@ -226,17 +248,19 @@ function gotResult(err, results) {
   //saveDataToFile();
   
   logged_cards.add(hijack);
-  console.log('Logged card: ' + hijack + '\n');
+  //console.log('Logged card: ' + hijack + '\n');
   
-  mySet.forEach(function(value) {
+  logged_cards.forEach(function(value) {
     console.log('\nLogged cards: ' + value + '\n');
   });
   
   if (is_quick && logged_cards.size > 0){
     stop_cam();
+    return;
   }
   if (is_sequential && (logged_cards.size == cards_list.length)) {
     stop_cam();
+    return;
   }
   
   wait(500);
@@ -250,4 +274,5 @@ function stop_cam() {
   is_sequential = false;
   classifier = undefined;
   myVoice.speak(``);
+  return;
 }
