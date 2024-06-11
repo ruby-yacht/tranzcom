@@ -354,7 +354,7 @@ function gotResult(err, results) {
     return;
   }
 
-  wait(500);
+  //wait(500);
   classifyVideo();
 }
 
@@ -364,6 +364,9 @@ function stop_cam() {
   is_quick = false;
   is_sequential = false;
   classifier = undefined;
+  logged_cards = new Set();
+  cards_list = [];
+  
   myVoice.speak(``);
   return;
 }
