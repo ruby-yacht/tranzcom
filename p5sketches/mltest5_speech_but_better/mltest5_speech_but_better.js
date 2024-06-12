@@ -354,7 +354,8 @@ function gotResult(err, results) {
     return;
   }
 
-  //wait(500);
+//  wait(500);
+
   classifyVideo();
 }
 
