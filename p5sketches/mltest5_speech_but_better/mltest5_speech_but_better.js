@@ -169,10 +169,7 @@ function getKeyByVal(obj, value) {
 }
 
 function hijacker(results) {
-  // must ensure none of these overlap!!!
-  // let eye_label_nums = [451, 616, 823, 826, 902];
-  // let life_label_nums = [111, 438, 714, 767, 783, 968];
-  // let triangle_label_nums = [409, 613, 659, 872, 892, 920];
+
   let eye_label_nums = [
     898, 616, 823, 902, 451, 714, 650, 506, 409, 721, 767, 606, 600, 584, 433,
     826,
@@ -303,26 +300,30 @@ function gotResult(err, results) {
   if (results.length > 0) {
     hijack = hijacker(results);
     //select('#result').html(results[0].label);
-    select('#result').html(hijack);
-    select('#probability').html(nf(results[0].confidence, 0, 2));
-    select('#logged_cards').html(Array.from(logged_cards));
+    if (!stream_status){
+      select('#result').html(hijack);
+      select('#probability').html(nf(results[0].confidence, 0, 2));
+    }
+    
+    if (is_quick){
+      select('#logged_cards').html(Array.from(logged_cards).slice(0,1));
+      if (logged_cards.size == 1){
+        return;
+      }
+    }
+    else if (is_sequential){
+      select('#logged_cards').html(Array.from(logged_cards).slice(0,3));
+      if (logged_cards.size == 3){
+        return;
+      }
+    }
+    else{
+      select('#logged_cards').html(Array.from(logged_cards));
+    }
   }
-  //console.log(results[:]['label'])
-
-  //let data = {};
-
-  //list_printer(results);
-  //console.log('results size: ' + results.length + "\n")
 
   for (let i = 0; i < results.length; i++) {
     //console.log(results[i]['label'])
-    // OLD IF-ELSE
-    //if (data.hasOwnProperty(results[i]['label'])){
-    //  data[results[i]['label']]++;
-    //}
-    //else{
-    //  data[results[i]['label']] = 1;
-    //}
     // NEW IF-ELSE
     if (data.hasOwnProperty(hijack)) {
       data[hijack]++;
@@ -363,7 +364,7 @@ function stop_cam() {
   stream_status = false;
   is_quick = false;
   is_sequential = false;
-  classifier = undefined;
+  // classifier = undefined;
   logged_cards = new Set();
   cards_list = [];
   
