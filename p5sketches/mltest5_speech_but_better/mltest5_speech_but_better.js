@@ -6,131 +6,84 @@ ml5 Example
 Webcam Image Classification using MobileNet and p5.js
 This example uses a callback pattern to create the classifier
 === */
-
 let classifier;
 let video;
-// Create a new p5.speech object
-// You can also control the Language, Rate, Pitch and Volumn of the voice
-// Read more at http://ability.nyu.edu/p5.js-speech/
 const myVoice = new p5.Speech();
-// defined as global to get ALL data in a session
 let data = {};
-//document.getElementById("start_stream").addEventListener("Click", run_cam);
 let stream_status = false;
 let is_quick = false;
 let is_sequential = false;
 let logged_cards = new Set();
 let cards_list = [];
 let cards = [
-              'eye', 
-              'life', 
-              'triangle', 
-              'sun', 
-              'mercury',
-              'venus',
-              'moon',
-              'mars',
-              'jupiter',
-              'saturn',
-              'time',
-              'symmetry',
-              'infinity'
-              ]
+  'eye', 'life', 'triangle', 'sun', 'mercury', 'venus', 'moon',
+  'mars', 'jupiter', 'saturn', 'time', 'symmetry', 'infinity'
+];
+
 function setup() {
-  //noCanvas();
   createCanvas(600, 400);
-
-  //background(200);
-
-  let quick_read_button = createButton('Button 1');
-  let sequential_read_button = createButton('Button 3');
-  let start_button = createButton('~ Tap into the spirit ~');
-  let stop_button = createButton('~ Sever Divine Connection ~');
-  let download_button = createButton('Oh divine mother, tell me what you see!');
-
-  // Create a camera input
   video = createCapture(VIDEO);
   video.position(50, 250);
-  console.log('VIDEO WIDTH HEIGHT: ', video.width, video.height);
 
-  // NOTE: because video is 300x150; therefore, the end X_positionxY_position of it is 350x500
-  quick_read_button.position(725, 425);
-  sequential_read_button.position(725, 450);
-  start_button.position(725, 475);
-  stop_button.position(725, 500);
-  download_button.position(725, 525);
+  let buttonConfigs = [
+    { label: 'Button 1', handler: run_cam_1, posY: 425 },
+    { label: 'Button 3', handler: run_cam_3, posY: 450 },
+    { label: '~ Tap into the spirit ~', handler: run_cam, posY: 475 },
+    { label: '~ Sever Divine Connection ~', handler: stop_cam, posY: 500 },
+    { label: 'Oh divine mother, tell me what you see!', handler: saveDataToFile, posY: 525 }
+  ];
 
-  quick_read_button.mousePressed(run_cam_1);
-  describe(
-    'A gray button that runs turns on the camera feed for analyzing the first symbol it sees.'
-  );
-  sequential_read_button.mousePressed(run_cam_3);
-  describe(
-    'A gray button that runs turns on the camera feed for analyzing the entire deck.'
-  );
-  start_button.mousePressed(run_cam);
-  describe(
-    "A gray button that runs turns on the camera feed for analyzing the symbols seen by camera's video feed."
-  );
-  stop_button.mousePressed(stop_cam);
-  describe('A gray button that stops the camera feed and resets the data');
-  download_button.mousePressed(saveDataToFile);
-  describe(
+  buttonConfigs.forEach((btn, index) => {
+    let button = createButton(btn.label);
+    button.position(725, btn.posY);
+    button.mousePressed(btn.handler);
+  });
+
+  describeButtons();
+}
+
+function describeButtons() {
+  let descriptions = [
+    'A gray button that runs turns on the camera feed for analyzing the first symbol it sees.',
+    'A gray button that runs turns on the camera feed for analyzing the entire deck.',
+    "A gray button that runs turns on the camera feed for analyzing the symbols seen by camera's video feed.",
+    'A gray button that stops the camera feed and resets the data',
     'A gray button that downloads a file containing what the camera has seen so far...'
-  );
+  ];
+
+  descriptions.forEach(desc => describe(desc));
 }
 
 function run_cam_1() {
   console.log('STARTED: quick reading');
+  logged_cards.clear();
   is_quick = true;
   run_cam();
 }
 
 function run_cam_3() {
   console.log('STARTED: sequential reading');
+  logged_cards.clear();
   is_sequential = true;
   run_cam();
 }
 
 function run_cam() {
   stream_status = true;
+  logged_cards.clear();
   data = {};
   console.log('running camera!!!!');
-  // Initialize the Image Classifier method with MobileNet and the video as the second argument
   classifier = ml5.imageClassifier('MobileNet', video, modelReady);
-  const filePath = 'logged_res_labels.txt';
-  //  frameRate(1);
 }
 
 function modelReady() {
-  // Change the status of the model once its ready
   select('#status').html('Model Loaded');
-  // Call the classifyVideo function to start classifying the video
-  //startLoop()
-  //while (stream_status){
   classifyVideo();
-
-  //}
-}
-
-// Function to start the loop
-function startLoop() {
-  // Run the loop until the stream status is true
-  var loopInterval = setInterval(function () {
-    if (!stream_status) {
-      clearInterval(loopInterval); // Stop the loop
-    }
-    classifier.classify(gotResult); // Call the function
-  }, 100); // Run every 1 second (adjust the interval as needed)
-}
-
-// Get a prediction for the current video frame
-function classifyVideo() {
-  startLoop();
 }
 
 function wait(time) {
-  start = millis();
+  const start = millis();
+  let current;
   do {
     current = millis();
   } while (current < start + time);
@@ -138,23 +91,18 @@ function wait(time) {
 
 function saveDataToFile() {
   console.log('DOWNLOADING DATA...');
-  var dict_as_str = JSON.stringify(data);
-  var blob = new Blob([dict_as_str], { type: 'text/plain' });
+  const dictAsStr = JSON.stringify(data);
+  const blob = new Blob([dictAsStr], { type: 'text/plain' });
 
-  // Create a temporary anchor element and set its attributes
-  var a = document.createElement('a');
+  const a = document.createElement('a');
   a.download = 'sessionStorageData.txt';
   a.href = window.URL.createObjectURL(blob);
   a.style.display = 'none';
 
-  // Append the anchor to the body and trigger a click event to start download
   document.body.appendChild(a);
   a.click();
-
-  // Clean up by removing the temporary anchor
   document.body.removeChild(a);
 }
-
 function card_logger(card_val) {
   logged_cards.add(card_val);
   console.log('Detected card: ', card_val);
@@ -169,10 +117,7 @@ function getKeyByVal(obj, value) {
 }
 
 function hijacker(results) {
-  // must ensure none of these overlap!!!
-  // let eye_label_nums = [451, 616, 823, 826, 902];
-  // let life_label_nums = [111, 438, 714, 767, 783, 968];
-  // let triangle_label_nums = [409, 613, 659, 872, 892, 920];
+
   let eye_label_nums = [
     898, 616, 823, 902, 451, 714, 650, 506, 409, 721, 767, 606, 600, 584, 433,
     826,
@@ -288,73 +233,61 @@ function list_printer(results) {
   }
 }
 
-// When we get a result
-function gotResult(err, results) {
-  // The results are in an array ordered by confidence.
-  results = results || [];
+function gotResult(err, results = []) {
+  if (err) {
+    console.error(err);
+    return;
+  }
 
-  // NOTE: uncomment for checking result array values
-  //results.forEach(function(value) {
-  //  console.log('\nRESULTS VALUE\n label: ' + value.label + ' - ' + value.confidence + '\n');
-  //});
+  console.log('results type:', typeof results);
 
-  console.log('results type: ' + typeof results + '\n');
   let hijack = '';
   if (results.length > 0) {
     hijack = hijacker(results);
-    //select('#result').html(results[0].label);
     select('#result').html(hijack);
     select('#probability').html(nf(results[0].confidence, 0, 2));
-    select('#logged_cards').html(Array.from(logged_cards));
+
+    if (is_quick && logged_cards.size === 1) {
+      select('#logged_cards').html(Array.from(logged_cards).slice(0, 2));
+      return;
+    } else if (is_sequential && logged_cards.size === 3) {
+      select('#logged_cards').html(Array.from(logged_cards).slice(0, 4));
+      return;
+    } else {
+      select('#logged_cards').html(Array.from(logged_cards));
+    }
   }
-  //console.log(results[:]['label'])
 
-  //let data = {};
-
-  //list_printer(results);
-  //console.log('results size: ' + results.length + "\n")
-
-  for (let i = 0; i < results.length; i++) {
-    //console.log(results[i]['label'])
-    // OLD IF-ELSE
-    //if (data.hasOwnProperty(results[i]['label'])){
-    //  data[results[i]['label']]++;
-    //}
-    //else{
-    //  data[results[i]['label']] = 1;
-    //}
-    // NEW IF-ELSE
+  if (results.length > 0) {
     if (data.hasOwnProperty(hijack)) {
       data[hijack]++;
     } else {
-      data[hijacker] = 1;
+      data[hijack] = 1;
     }
   }
+
   if (stream_status && cards.includes(hijack)) {
     myVoice.speak(`I see ${hijack}`);
   }
-  //sessionStorage approach
-  //sessionStorage.setItem('data', JSON.stringify(data));
-  //saveDataToFile();
-  if (cards.includes(hijack)){
+
+  if (cards.includes(hijack)) {
     logged_cards.add(hijack);
   }
-  //console.log('Logged card: ' + hijack + '\n');
 
-  logged_cards.forEach(function (value) {
-    console.log('\nLogged cards: ' + value + '\n');
+  logged_cards.forEach(value => {
+    console.log('Logged cards:', value);
   });
 
-  if (is_quick && logged_cards.size == 1) {
+  if (is_quick && logged_cards.size === 1) {
+    select('#logged_cards').html(Array.from(logged_cards).slice(0, 2));
     stop_cam();
     return;
   }
-  if (is_sequential && logged_cards.size == 3) {
+  if (is_sequential && logged_cards.size === 3) {
+    select('#logged_cards').html(Array.from(logged_cards).slice(0, 4));
     stop_cam();
     return;
   }
-
-//  wait(500);
 
   classifyVideo();
 }
@@ -364,10 +297,13 @@ function stop_cam() {
   stream_status = false;
   is_quick = false;
   is_sequential = false;
-  classifier = undefined;
-  logged_cards = new Set();
+  logged_cards.clear();
   cards_list = [];
-  
-  myVoice.speak(``);
-  return;
+  myVoice.speak('');
+}
+
+function classifyVideo() {
+  if (stream_status) {
+    classifier.classify(gotResult);
+  }
 }
