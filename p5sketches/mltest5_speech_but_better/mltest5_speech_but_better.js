@@ -56,21 +56,18 @@ function describeButtons() {
 
 function run_cam_1() {
   console.log('STARTED: quick reading');
-  logged_cards.clear();
   is_quick = true;
   run_cam();
 }
 
 function run_cam_3() {
   console.log('STARTED: sequential reading');
-  logged_cards.clear();
   is_sequential = true;
   run_cam();
 }
 
 function run_cam() {
   stream_status = true;
-  logged_cards.clear();
   data = {};
   console.log('running camera!!!!');
   classifier = ml5.imageClassifier('MobileNet', video, modelReady);
@@ -79,6 +76,20 @@ function run_cam() {
 function modelReady() {
   select('#status').html('Model Loaded');
   classifyVideo();
+}
+
+function startLoop() {
+  const loopInterval = setInterval(() => {
+    if (!stream_status) {
+      clearInterval(loopInterval);
+    } else {
+      classifier.classify(gotResult);
+    }
+  }, 100); // Run every 100 ms (adjust the interval as needed)
+}
+
+function classifyVideo() {
+  startLoop();
 }
 
 function wait(time) {
