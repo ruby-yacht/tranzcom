@@ -36,6 +36,7 @@ function setup() {
   buttonConfigs.forEach((btn, index) => {
     let button = createButton(btn.label);
     button.position(600, btn.posY);
+    button.size(100, 40);
     button.mousePressed(btn.handler);
   });
 
