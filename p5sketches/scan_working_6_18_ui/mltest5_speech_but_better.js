@@ -26,16 +26,16 @@ function setup() {
   video.position(50, 250);
 
   let buttonConfigs = [
-    { label: 'Button 1', handler: run_cam_1, posY: 425 },
-    { label: 'Button 3', handler: run_cam_3, posY: 450 },
-    { label: '~ Tap into the spirit ~', handler: run_cam, posY: 475 },
-    { label: '~ Sever Divine Connection ~', handler: stop_cam, posY: 500 },
-    { label: 'divine mother, tell me what you see!', handler: saveDataToFile, posY: 525 }
+    { label: '1 card', handler: run_cam_1, posY: 400 },
+    { label: '3 cards', handler: run_cam_3, posY: 450 },
+    { label: 'scan', handler: run_cam, posY: 500 },
+    { label: 'stop', handler: stop_cam, posY: 550 },
+    { label: 'save', handler: saveDataToFile, posY: 600 }
   ];
 
   buttonConfigs.forEach((btn, index) => {
     let button = createButton(btn.label);
-    button.position(725, btn.posY);
+    button.position(600, btn.posY);
     button.mousePressed(btn.handler);
   });
 
@@ -278,7 +278,7 @@ function gotResult(err, results = []) {
   }
 
   if (stream_status && cards.includes(hijack)) {
-    myVoice.speak(`I see ${hijack}`);
+  //  myVoice.speak(`I see ${hijack}`);
   }
 
   if (cards.includes(hijack)) {
