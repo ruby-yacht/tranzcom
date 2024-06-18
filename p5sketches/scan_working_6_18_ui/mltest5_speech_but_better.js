@@ -24,7 +24,7 @@ function setup() {
   createCanvas(600, 400);
 // , { facingMode:"environment" }
 
-  video = createCapture(VIDEO, { facingMode:"environment" });
+  video = createCapture(VIDEO);
   video.position(50, 250);
 
   let buttonConfigs = [
