@@ -32,7 +32,8 @@ function setup() {
     { label: '3 cards', handler: run_cam_3, posY: 450 },
     { label: 'scan', handler: run_cam, posY: 500 },
     { label: 'stop', handler: stop_cam, posY: 550 },
-    { label: 'save', handler: saveDataToFile, posY: 600 }
+    { label: 'save', handler: saveDataToFile, posY: 600 },
+    { label: 'camera', handler: switchCamera, posY: 650 }
   ];
 
   buttonConfigs.forEach((btn, index) => {
