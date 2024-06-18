@@ -21,10 +21,14 @@ let cards = [
 ];
 
 function switchCamera() {
+  video.remove();
   if (devices && devices.length > 1) {
     let currentIndex = devices.findIndex(device => device.deviceId === currentDeviceId);
     currentDeviceId = devices[(currentIndex + 1) % devices.length].deviceId;
-    startVideo();
+//    startVideo();
+  video = createCapture(VIDEO);
+  video.position(50, 250);
+  
   }
 }
 
