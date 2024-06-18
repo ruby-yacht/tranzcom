@@ -30,7 +30,7 @@ function setup() {
     { label: 'Button 3', handler: run_cam_3, posY: 450 },
     { label: '~ Tap into the spirit ~', handler: run_cam, posY: 475 },
     { label: '~ Sever Divine Connection ~', handler: stop_cam, posY: 500 },
-    { label: 'Oh divine mother, tell me what you see!', handler: saveDataToFile, posY: 525 }
+    { label: 'divine mother, tell me what you see!', handler: saveDataToFile, posY: 525 }
   ];
 
   buttonConfigs.forEach((btn, index) => {
