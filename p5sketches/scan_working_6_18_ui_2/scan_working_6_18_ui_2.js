@@ -8,7 +8,7 @@ This example uses a callback pattern to create the classifier
 === */
 let classifier;
 let video;
-const myVoice = new p5.Speech();
+//const myVoice = new p5.Speech();
 let data = {};
 let stream_status = false;
 let is_quick = false;
@@ -20,24 +20,10 @@ let cards = [
   'mars', 'jupiter', 'saturn', 'time', 'symmetry', 'infinity'
 ];
 
-function switchCamera() {
-  video.remove();
-//  if (devices && devices.length > 1) {
-//    let currentIndex = devices.findIndex(device => device.deviceId === currentDeviceId);
- //   currentDeviceId = devices[(currentIndex + 1) % devices.length].deviceId;
-//    startVideo();
-  video = createCapture(VIDEO);
-  video.position(50, 250);
-  
-//  }
-}
-
-
 function setup() {
   createCanvas(600, 400);
-// , { facingMode:"environment" }
 
-  video = createCapture(VIDEO, { facingMode:"environment" });
+  video = createCapture(VIDEO);
   video.position(50, 250);
 
   let buttonConfigs = [
@@ -45,8 +31,7 @@ function setup() {
     { label: '3 cards', handler: run_cam_3, posY: 450 },
     { label: 'scan', handler: run_cam, posY: 500 },
     { label: 'stop', handler: stop_cam, posY: 550 },
-    { label: 'save', handler: saveDataToFile, posY: 600 },
-    { label: 'camera', handler: switchCamera, posY: 650 }
+    { label: 'save', handler: saveDataToFile, posY: 600 }
   ];
 
   buttonConfigs.forEach((btn, index) => {
@@ -63,9 +48,10 @@ function describeButtons() {
   let descriptions = [
     'A gray button that runs turns on the camera feed for analyzing the first symbol it sees.',
     'A gray button that runs turns on the camera feed for analyzing the entire deck.',
-    "A gray button that runs turns on the camera feed for analyzing the symbols seen by camera's video feed.",
+    "A gray button that runs turns on the camera feed for analyzing the symbols seen by camera's video feed.", 
     'A gray button that stops the camera feed and resets the data',
-    'A gray button that downloads a file containing what the camera has seen so far...'
+    'A gray button that downloads a file containing what the camera has seen so far...',
+    'none'
   ];
 
   descriptions.forEach(desc => describe(desc));
