@@ -30,7 +30,7 @@ function setup() {
   
   
   
-  video = createCapture(options);
+  video = createCapture(VIDEO);
   video.position(50, 250);
 
   let buttonConfigs = [
