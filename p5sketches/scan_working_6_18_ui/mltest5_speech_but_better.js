@@ -22,8 +22,15 @@ let cards = [
 
 function setup() {
   createCanvas(600, 400);
+  var options = {
+     video: {      
+         facingMode:"environment"      
+     }
+   };
   
-  video = createCapture(VIDEO, {facingMode:"environment"});
+  
+  
+  video = createCapture(options);
   video.position(50, 250);
 
   let buttonConfigs = [
