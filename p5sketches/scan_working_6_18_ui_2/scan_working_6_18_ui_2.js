@@ -6,6 +6,17 @@ ml5 Example
 Webcam Image Classification using MobileNet and p5.js
 This example uses a callback pattern to create the classifier
 === */
+// Dev mode: enables the frequency chart and label-specificity panel which
+// are analysis tools, not client-facing UI. Enable by adding `?dev=1` to the
+// URL. Default is off so a museum/client install never sees the stats.
+const isDevMode = new URLSearchParams(window.location.search).has('dev');
+if (isDevMode) {
+  document.body && document.body.classList.add('dev-mode');
+  // body might not exist yet at script load if the script is in <head>;
+  // re-apply on DOMContentLoaded just in case.
+  document.addEventListener('DOMContentLoaded', () => document.body.classList.add('dev-mode'));
+}
+
 let classifier;
 let video;
 const myVoice = new p5.Speech();
@@ -299,6 +310,7 @@ function analyzeCardLabelSpecificity() {
 }
 
 function renderOverlapAudit() {
+  if (!isDevMode) return;
   const panel = document.getElementById('overlap_panel');
   if (!panel) return;
 
@@ -359,6 +371,7 @@ function deviationColor(count, expected, total) {
 }
 
 function renderFrequencyChart() {
+  if (!isDevMode) return;
   const chart = document.getElementById('frequency_chart');
   if (!chart) return;
 
@@ -428,7 +441,7 @@ const CSV_HEADER = [
 ].join(',');
 
 function saveDataToFile() {
-  if (!sessionStartIso) {
+  if (!sessionStartIso || sessionEvents.length === 0) {
     console.warn('No session data to save — start a reading first.');
     return;
   }
@@ -586,6 +599,9 @@ function stop_cam(silent = true) {
   } else if (pendingSpeechBuffer.length > 0) {
     flushSpeech();
   }
+  // Auto-save at the end of every reading session. saveDataToFile bails on
+  // empty sessions, so stopping before any frames came in is a no-op.
+  saveDataToFile();
 }
 
 function classifyVideo() {

@@ -16,6 +16,29 @@
       padding: 0;
       margin: 0;
     }
+    /* Analysis panels are hidden in the client-facing build.
+       Append `?dev=1` to the URL to enable them. */
+    #frequency_chart,
+    #overlap_panel {
+      display: none;
+    }
+    body.dev-mode #frequency_chart,
+    body.dev-mode #overlap_panel {
+      display: block;
+    }
+    body.dev-mode::before {
+      content: 'DEV MODE';
+      position: fixed;
+      top: 0;
+      right: 0;
+      background: #d9534f;
+      color: white;
+      padding: 4px 8px;
+      font-family: monospace;
+      font-size: 11px;
+      letter-spacing: 1px;
+      z-index: 1000;
+    }
     #frequency_chart {
       position: absolute;
       top: 250px;
