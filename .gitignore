@@ -1,2 +1,7 @@
 
 .DS_Store
+
+# Local-only project docs
+CLAUDE.md
+prod.md
+todo.md
