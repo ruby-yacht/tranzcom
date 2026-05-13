@@ -57,6 +57,44 @@
       margin-top: 6px;
       color: #555;
     }
+    #overlap_panel {
+      position: absolute;
+      top: 760px;
+      left: 760px;
+      width: 360px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    #overlap_panel h2 {
+      font-size: 13px;
+      margin: 0 0 6px;
+    }
+    .ov-row {
+      display: flex;
+      align-items: center;
+      margin: 1px 0;
+    }
+    .ov-name {
+      width: 70px;
+      text-align: right;
+      padding-right: 8px;
+    }
+    .ov-total {
+      width: 60px;
+    }
+    .ov-bar {
+      flex: 1;
+      height: 10px;
+      background: #eee;
+      max-width: 160px;
+      display: flex;
+    }
+    .ov-bar > .ov-avail { background: #5cb85c; height: 100%; }
+    .ov-bar > .ov-stolen { background: #d9534f; height: 100%; }
+    .ov-meta {
+      margin-top: 6px;
+      color: #555;
+    }
   </style>
 </head>
 
@@ -72,6 +110,7 @@
     <h2>frequency (this reading)</h2>
     <div class="freq-meta">no data yet</div>
   </div>
+  <div id="overlap_panel"></div>
 </body>
 
 </html>

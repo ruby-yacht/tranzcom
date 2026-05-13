@@ -182,6 +182,7 @@ function setup() {
     speechButton.html(`Speech: ${speechEnabled ? 'on' : 'off'}`);
   });
 
+  renderOverlapAudit();
   describeButtons();
 }
 
@@ -248,6 +249,74 @@ const MIN_TOTAL_FOR_DEVIATION_COLOR = 13;
 // (i.e. total >= 65) to be reliable.
 const CHI2_CRIT_005_DF12 = 21.026;
 const CHI2_RELIABLE_MIN_TOTAL = 65;
+
+// Static analysis of CARD_LABELS. hijacker() walks `cards` in priority order
+// and returns the first card whose label set contains the ImageNet label —
+// so overlapping labels are always claimed by the earlier card. For each
+// card we count how many of its labels are "available" (not in any earlier
+// card's set) vs "stolen by earlier" (preempted in the priority order).
+function analyzeCardLabelOverlap() {
+  const labelCardCounts = new Map(); // label -> how many cards' sets contain it
+  for (const card of cards) {
+    for (const label of CARD_LABELS[card]) {
+      labelCardCounts.set(label, (labelCardCounts.get(label) || 0) + 1);
+    }
+  }
+
+  const claimed = new Set();
+  const perCard = cards.map(card => {
+    const set = CARD_LABELS[card];
+    let stolen = 0;
+    for (const label of set) {
+      if (claimed.has(label)) stolen++;
+    }
+    for (const label of set) claimed.add(label);
+    return {
+      card,
+      total: set.size,
+      available: set.size - stolen,
+      stolen,
+    };
+  });
+
+  const totalUniqueLabels = labelCardCounts.size;
+  let multiCardLabels = 0;
+  for (const c of labelCardCounts.values()) if (c > 1) multiCardLabels++;
+
+  return { totalUniqueLabels, multiCardLabels, perCard };
+}
+
+function renderOverlapAudit() {
+  const panel = document.getElementById('overlap_panel');
+  if (!panel) return;
+
+  const stats = analyzeCardLabelOverlap();
+  const maxTotal = Math.max(...stats.perCard.map(s => s.total));
+
+  const rows = stats.perCard.map(s => {
+    const availPct = (s.available / maxTotal * 100).toFixed(0);
+    const stolenPct = (s.stolen / maxTotal * 100).toFixed(0);
+    return `<div class="ov-row">
+      <span class="ov-name">${s.card}</span>
+      <span class="ov-bar">
+        <span class="ov-avail" style="width:${availPct}%"></span>
+        <span class="ov-stolen" style="width:${stolenPct}%"></span>
+      </span>
+      <span class="ov-total">${s.available}/${s.total}</span>
+    </div>`;
+  }).join('');
+
+  panel.innerHTML =
+    '<h2>hijacker overlap (priority bias)</h2>' +
+    rows +
+    `<div class="ov-meta">
+      ${stats.totalUniqueLabels} unique labels &middot;
+      ${stats.multiCardLabels} appear in 2+ cards<br>
+      <span style="color:#5cb85c">available</span> /
+      <span style="color:#d9534f">stolen by earlier card</span> &middot;
+      counts show <em>available / total</em>
+    </div>`;
+}
 
 function chiSquaredVsUniform(counts) {
   const total = counts.reduce((a, b) => a + b, 0);
