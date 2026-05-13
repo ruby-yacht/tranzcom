@@ -188,6 +188,13 @@ let consentGiven = null;
 let geoLat = null;
 let geoLon = null;
 
+// Set true by modelReady() once ml5 finishes loading MobileNet. The classifier
+// is now preloaded in setup() so this normally flips well before the user
+// finishes interacting with the consent modal — but we guard the read path
+// against the race in case they're faster than the network.
+let modelLoaded = false;
+let pendingReadingStart = false;
+
 function showConsentModal(onChoice) {
   const modal = document.getElementById('consent_modal');
   const accept = document.getElementById('consent_accept');
@@ -236,48 +243,45 @@ function captureGeolocation() {
 }
 
 function setup() {
-  createCanvas(600, 400);
+  // No p5 canvas — layout is pure CSS/DOM. createCapture still works without
+  // a canvas; ml5 reads from the underlying <video> element directly.
+  noCanvas();
 
   video = createCapture(VIDEO);
-  video.position(50, 250);
+  video.parent('video_container');
+  // p5 sets inline width/height attributes on the <video> element; clear them
+  // so our CSS (max-width: 100%, max-height: 70vh) actually wins.
+  video.elt.removeAttribute('width');
+  video.elt.removeAttribute('height');
 
-  let buttonConfigs = [
-    { label: '1 card', handler: run_cam_1, posY: 400 },
-    { label: '3 cards', handler: run_cam_3, posY: 450 },
-    { label: 'scan', handler: run_cam, posY: 500 },
-    { label: 'stop', handler: stop_cam, posY: 550 },
-    { label: 'save', handler: saveDataToFile, posY: 600 }
+  const buttonConfigs = [
+    { label: '1 card', handler: run_cam_1 },
+    { label: '3 cards', handler: run_cam_3 },
+    { label: 'scan', handler: run_cam },
+    { label: 'stop', handler: stop_cam },
+    { label: 'save', handler: saveDataToFile },
   ];
 
-  buttonConfigs.forEach((btn, index) => {
-    let button = createButton(btn.label);
-    button.position(600, btn.posY);
-    button.size(100, 40);
+  buttonConfigs.forEach((btn) => {
+    const button = createButton(btn.label);
+    button.parent('toolbar');
     button.mousePressed(btn.handler);
   });
 
-  let speechButton = createButton('Speech: off');
-  speechButton.position(600, 350);
-  speechButton.size(100, 40);
+  const speechButton = createButton('Speech: off');
+  speechButton.parent('toolbar');
   speechButton.mousePressed(() => {
     setSpeechEnabled(!speechEnabled);
     speechButton.html(`Speech: ${speechEnabled ? 'on' : 'off'}`);
   });
 
+  // Preload the MobileNet classifier at page load instead of waiting for the
+  // first reading press. The model is cached after first load, so on
+  // subsequent visits it's near-instant. While loading, status text shows
+  // "Loading Model..." (from index.html); once loaded modelReady() updates it.
+  classifier = ml5.imageClassifier('MobileNet', video, modelReady);
+
   renderOverlapAudit();
-  describeButtons();
-}
-
-function describeButtons() {
-  let descriptions = [
-    'A gray button that runs turns on the camera feed for analyzing the first symbol it sees.',
-    'A gray button that runs turns on the camera feed for analyzing the entire deck.',
-    "A gray button that runs turns on the camera feed for analyzing the symbols seen by camera's video feed.", 
-    'A gray button that stops the camera feed and resets the data',
-    'A gray button that downloads a file containing what the camera has seen so far...',
-  ];
-
-  descriptions.forEach(desc => describe(desc));
 }
 
 function run_cam_1() {
@@ -333,12 +337,22 @@ function actuallyStartReading() {
   logged_cards.clear();
   renderFrequencyChart();
   console.log('running camera!!!!');
-  classifier = ml5.imageClassifier('MobileNet', video, modelReady);
+  if (modelLoaded) {
+    classifyVideo();
+  } else {
+    // Model hasn't finished loading yet. modelReady() will pick this up.
+    select('#status').html('Loading model — please wait...');
+    pendingReadingStart = true;
+  }
 }
 
 function modelReady() {
-  select('#status').html('Model Loaded');
-  classifyVideo();
+  modelLoaded = true;
+  select('#status').html('Model loaded — ready');
+  if (pendingReadingStart) {
+    pendingReadingStart = false;
+    if (stream_status) classifyVideo();
+  }
 }
 
 // Live horizontal-bar chart of per-card detection counts. Bars are colored
