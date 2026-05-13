@@ -265,27 +265,23 @@ function renderFrequencyChart() {
     `<div class="freq-row freq-meta">total: ${total} &middot; haze: ${haze}</div>`;
 }
 
-// Session file schema, versioned so batch-compilation scripts can detect
-// format changes. The geolocation + consent fields are placeholders today
-// (Phase 2 wires the actual consent flow and geolocation capture).
-function sessionPayload() {
-  return {
-    schema_version: 1,
-    session: {
-      started_at: sessionStartIso,
-      reading_mode: readingMode,
-      consent: {
-        geolocation: false,
-      },
-      geolocation: null,
-    },
-    events: sessionEvents,
-    summary: {
-      counts: data,
-      sequence: ordered_cards,
-    },
-  };
-}
+// CSV schema, versioned via the schema_version column so batch-compilation
+// scripts can detect format changes. Session metadata is denormalized onto
+// every row so files can be concatenated without joining. The geolocation +
+// consent columns are placeholders today (Phase 2 wires the consent flow).
+const CSV_SCHEMA_VERSION = 1;
+const CSV_HEADER = [
+  'schema_version',
+  'session_started_at',
+  'reading_mode',
+  't_ms',
+  'imagenet_label',
+  'imagenet_confidence',
+  'hijacker_label',
+  'consent_geolocation',
+  'geo_lat',
+  'geo_lon',
+].join(',');
 
 function saveDataToFile() {
   if (!sessionStartIso) {
@@ -296,12 +292,26 @@ function saveDataToFile() {
 
   // Filesystem-safe ISO timestamp: replace `:` and `.` with `-`.
   const safeTimestamp = sessionStartIso.replace(/:/g, '-').replace(/\./g, '-');
-  const filename = `${readingMode}_${safeTimestamp}.json`;
+  const filename = `${readingMode}_${safeTimestamp}.csv`;
 
-  const blob = new Blob(
-    [JSON.stringify(sessionPayload(), null, 2)],
-    { type: 'application/json' }
-  );
+  // None of our values contain commas, quotes, or newlines, so plain
+  // unquoted CSV is safe. If hijacker_label ever gains multi-word values
+  // this will need RFC 4180 quoting.
+  const rows = sessionEvents.map(e => [
+    CSV_SCHEMA_VERSION,
+    sessionStartIso,
+    readingMode,
+    e.t_ms,
+    e.imagenet_label,
+    e.imagenet_confidence.toFixed(6),
+    e.hijacker_label,
+    'false', // consent_geolocation — false until Phase 2 consent flow lands
+    '',      // geo_lat
+    '',      // geo_lon
+  ].join(','));
+
+  const csv = [CSV_HEADER, ...rows].join('\n') + '\n';
+  const blob = new Blob([csv], { type: 'text/csv' });
   const a = document.createElement('a');
   a.download = filename;
   a.href = window.URL.createObjectURL(blob);
