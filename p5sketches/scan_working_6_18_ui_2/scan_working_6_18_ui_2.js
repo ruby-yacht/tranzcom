@@ -142,6 +142,15 @@ const CARD_LABELS = {
 // upload) needs sequence, not just counts; logged_cards is a Set and loses order.
 let ordered_cards = [];
 
+// Per-session event log. One entry per classification frame (regardless of
+// whether hijacker matched a card or returned 'haze'). Designed for batch
+// compilation across many session files. See sessionPayload() for schema.
+let sessionEvents = [];
+let sessionStartMs = 0;     // millis() when run_cam fired (event t_ms is relative)
+let sessionStartIso = '';   // ISO 8601 UTC timestamp for filename + metadata
+// 'card_type' uses the user's terminology: one of 'one_card', 'three_cards', 'scan'.
+let readingMode = 'scan';
+
 function setup() {
   createCanvas(600, 400);
 
@@ -189,18 +198,31 @@ function describeButtons() {
 function run_cam_1() {
   console.log('STARTED: quick reading');
   is_quick = true;
+  readingMode = 'one_card';
   run_cam();
 }
 
 function run_cam_3() {
   console.log('STARTED: sequential reading');
   is_sequential = true;
+  readingMode = 'three_cards';
   run_cam();
 }
 
 function run_cam() {
+  // Default reading mode for the bare scan button. run_cam_1 / run_cam_3
+  // set readingMode before calling us, so we only fall back to 'scan'
+  // when neither one-card nor three-card mode was requested.
+  if (!is_quick && !is_sequential) {
+    readingMode = 'scan';
+  }
   stream_status = true;
+  sessionStartMs = millis();
+  sessionStartIso = new Date().toISOString();
   data = {};
+  ordered_cards = [];
+  sessionEvents = [];
+  logged_cards.clear();
   renderFrequencyChart();
   console.log('running camera!!!!');
   classifier = ml5.imageClassifier('MobileNet', video, modelReady);
@@ -241,19 +263,47 @@ function renderFrequencyChart() {
     `<div class="freq-row freq-meta">total: ${total} &middot; haze: ${haze}</div>`;
 }
 
-function saveDataToFile() {
-  console.log('DOWNLOADING DATA...');
-  const payload = {
-    counts: data,
-    sequence: ordered_cards,
+// Session file schema, versioned so batch-compilation scripts can detect
+// format changes. The geolocation + consent fields are placeholders today
+// (Phase 2 wires the actual consent flow and geolocation capture).
+function sessionPayload() {
+  return {
+    schema_version: 1,
+    session: {
+      started_at: sessionStartIso,
+      reading_mode: readingMode,
+      consent: {
+        geolocation: false,
+      },
+      geolocation: null,
+    },
+    events: sessionEvents,
+    summary: {
+      counts: data,
+      sequence: ordered_cards,
+    },
   };
-  const blob = new Blob([JSON.stringify(payload)], { type: 'text/plain' });
+}
 
+function saveDataToFile() {
+  if (!sessionStartIso) {
+    console.warn('No session data to save — start a reading first.');
+    return;
+  }
+  console.log('DOWNLOADING DATA...');
+
+  // Filesystem-safe ISO timestamp: replace `:` and `.` with `-`.
+  const safeTimestamp = sessionStartIso.replace(/:/g, '-').replace(/\./g, '-');
+  const filename = `${readingMode}_${safeTimestamp}.json`;
+
+  const blob = new Blob(
+    [JSON.stringify(sessionPayload(), null, 2)],
+    { type: 'application/json' }
+  );
   const a = document.createElement('a');
-  a.download = 'sessionStorageData.txt';
+  a.download = filename;
   a.href = window.URL.createObjectURL(blob);
   a.style.display = 'none';
-
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -299,6 +349,13 @@ function gotResult(err, results = []) {
     } else {
       data[hijack] = 1;
     }
+    sessionEvents.push({
+      t_ms: Math.round(millis() - sessionStartMs),
+      card_type: readingMode,
+      imagenet_label: results[0].label,
+      imagenet_confidence: results[0].confidence,
+      hijacker_label: hijack,
+    });
     renderFrequencyChart();
   }
 
@@ -341,13 +398,15 @@ function gotResult(err, results = []) {
 // silent=false (auto-stop after a 1-/3-card reading completes): flush the
 // pending speech buffer immediately so the reading is spoken out loud even
 // though the camera is shutting down.
+// We deliberately do NOT clear `data`, `ordered_cards`, or `sessionEvents`
+// here — those are reading outputs and the user might still want to save
+// them. run_cam() resets them at the start of the next session.
 function stop_cam(silent = true) {
   console.log('CAMERA STOPPED!');
   stream_status = false;
   is_quick = false;
   is_sequential = false;
   logged_cards.clear();
-  ordered_cards = [];
   if (silent) {
     cancelPendingSpeech();
   } else if (pendingSpeechBuffer.length > 0) {
