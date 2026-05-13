@@ -148,7 +148,9 @@ let ordered_cards = [];
 let sessionEvents = [];
 let sessionStartMs = 0;     // millis() when run_cam fired (event t_ms is relative)
 let sessionStartIso = '';   // ISO 8601 UTC timestamp for filename + metadata
-// 'card_type' uses the user's terminology: one of 'one_card', 'three_cards', 'scan'.
+// Reading mode for the current session: 'one_card', 'three_cards', or 'scan'.
+// Recorded once at the session level (filename + session.reading_mode); not
+// repeated per-event since every event in a file shares the same mode.
 let readingMode = 'scan';
 
 function setup() {
@@ -351,7 +353,6 @@ function gotResult(err, results = []) {
     }
     sessionEvents.push({
       t_ms: Math.round(millis() - sessionStartMs),
-      card_type: readingMode,
       imagenet_label: results[0].label,
       imagenet_confidence: results[0].confidence,
       hijacker_label: hijack,
