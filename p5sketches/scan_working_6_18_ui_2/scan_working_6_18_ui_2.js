@@ -178,6 +178,63 @@ let sessionStartIso = '';   // ISO 8601 UTC timestamp for filename + metadata
 // repeated per-event since every event in a file shares the same mode.
 let readingMode = 'scan';
 
+// Consent + geolocation, re-prompted at the start of every reading per
+// prod.md. consentGiven: null = not asked, true/false = user choice.
+// saveDataToFile() only writes a file when consentGiven === true.
+// Geo fields stay null until the async getCurrentPosition resolves; they
+// may still be null at save time if the user blocked geo or the lookup
+// hasn't returned yet — that's logged as empty CSV cells, not an error.
+let consentGiven = null;
+let geoLat = null;
+let geoLon = null;
+
+function showConsentModal(onChoice) {
+  const modal = document.getElementById('consent_modal');
+  const accept = document.getElementById('consent_accept');
+  const decline = document.getElementById('consent_decline');
+  if (!modal || !accept || !decline) {
+    console.warn('Consent modal missing; defaulting to decline.');
+    onChoice(false);
+    return;
+  }
+  modal.hidden = false;
+  const cleanup = () => {
+    modal.hidden = true;
+    accept.removeEventListener('click', acceptHandler);
+    decline.removeEventListener('click', declineHandler);
+    document.removeEventListener('keydown', escapeHandler);
+  };
+  const acceptHandler = () => { cleanup(); onChoice(true); };
+  const declineHandler = () => { cleanup(); onChoice(false); };
+  // Escape key treats as decline so a kiosk visitor isn't trapped by the
+  // modal if they back away without choosing.
+  const escapeHandler = (e) => { if (e.key === 'Escape') declineHandler(); };
+  accept.addEventListener('click', acceptHandler);
+  decline.addEventListener('click', declineHandler);
+  document.addEventListener('keydown', escapeHandler);
+}
+
+// Coarse location only — accuracy hint is conservative so the browser can
+// return city-level GPS without prompting for fine permissions on devices
+// that distinguish them.
+function captureGeolocation() {
+  if (!navigator.geolocation) {
+    console.warn('Geolocation not supported in this browser.');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      geoLat = pos.coords.latitude;
+      geoLon = pos.coords.longitude;
+      console.log('Geolocation captured:', geoLat, geoLon);
+    },
+    (err) => {
+      console.warn('Geolocation failed:', err.message);
+    },
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+  );
+}
+
 function setup() {
   createCanvas(600, 400);
 
@@ -244,6 +301,29 @@ function run_cam() {
   if (!is_quick && !is_sequential) {
     readingMode = 'scan';
   }
+  // If a reading is already in progress when the user starts a new one,
+  // close it out first so the prior session's auto-save and consent state
+  // are handled cleanly before re-prompting.
+  if (stream_status) {
+    stop_cam();
+  }
+  // Reset consent + geo for the new session, then prompt.
+  consentGiven = null;
+  geoLat = null;
+  geoLon = null;
+  showConsentModal((accepted) => {
+    consentGiven = accepted;
+    if (accepted) {
+      captureGeolocation();
+    }
+    actuallyStartReading();
+  });
+}
+
+// The camera-on path is split from run_cam() so the consent modal can defer
+// it. Even on decline we still start the reading — the camera works locally
+// regardless, only the save path is gated on consent.
+function actuallyStartReading() {
   stream_status = true;
   sessionStartMs = millis();
   sessionStartIso = new Date().toISOString();
@@ -445,6 +525,10 @@ function saveDataToFile() {
     console.warn('No session data to save — start a reading first.');
     return;
   }
+  if (consentGiven !== true) {
+    console.log('Save skipped — user did not consent to recording.');
+    return;
+  }
   console.log('DOWNLOADING DATA...');
 
   // Filesystem-safe ISO timestamp: replace `:` and `.` with `-`.
@@ -454,6 +538,8 @@ function saveDataToFile() {
   // None of our values contain commas, quotes, or newlines, so plain
   // unquoted CSV is safe. If hijacker_label ever gains multi-word values
   // this will need RFC 4180 quoting.
+  const geoLatStr = geoLat !== null ? geoLat.toFixed(6) : '';
+  const geoLonStr = geoLon !== null ? geoLon.toFixed(6) : '';
   const rows = sessionEvents.map(e => [
     CSV_SCHEMA_VERSION,
     sessionStartIso,
@@ -462,9 +548,9 @@ function saveDataToFile() {
     e.imagenet_label,
     e.imagenet_confidence.toFixed(6),
     e.hijacker_label,
-    'false', // consent_geolocation — false until Phase 2 consent flow lands
-    '',      // geo_lat
-    '',      // geo_lon
+    'true', // consent_geolocation — save path only runs when consent given
+    geoLatStr,
+    geoLonStr,
   ].join(','));
 
   const csv = [CSV_HEADER, ...rows].join('\n') + '\n';
