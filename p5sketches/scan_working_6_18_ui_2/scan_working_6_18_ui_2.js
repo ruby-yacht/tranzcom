@@ -264,22 +264,31 @@ const MIN_TOTAL_FOR_DEVIATION_COLOR = 13;
 const CHI2_CRIT_005_DF12 = 21.026;
 const CHI2_RELIABLE_MIN_TOTAL = 65;
 
-// Per-card label specificity breakdown. Labels are tiered by how many cards
-// they appear in: 1 (exclusive — most diagnostic), 2-3 (mild share), 4+
-// (heavy share). A card with mostly exclusive labels is easy to distinguish;
-// one dominated by heavy-share labels has weaker signal in the new score-
-// based hijacker.
+// Per-card label specificity breakdown. For each card we compute:
+//   score = Σ over labels in set of (1 / number_of_cards_containing_label)
+// This is the card's max possible hijacker score (if every one of its labels
+// appeared in top-K at confidence 1.0) — directly tied to algorithm behavior.
+// Labels are also bucketed by tier (1, 2-3, 4+ cards) so the bar can show
+// where a card's diagnostic strength comes from.
 function analyzeCardLabelSpecificity() {
   const perCard = cards.map(card => {
     const set = CARD_LABELS[card];
     let exclusive = 0, mild = 0, heavy = 0;
+    let exSpec = 0, mildSpec = 0, heavySpec = 0;
     for (const label of set) {
       const n = LABEL_CARD_COUNT.get(label);
-      if (n === 1) exclusive++;
-      else if (n <= 3) mild++;
-      else heavy++;
+      const spec = 1 / n;
+      if (n === 1) { exclusive++; exSpec += spec; }
+      else if (n <= 3) { mild++; mildSpec += spec; }
+      else { heavy++; heavySpec += spec; }
     }
-    return { card, total: set.size, exclusive, mild, heavy };
+    return {
+      card,
+      total: set.size,
+      exclusive, mild, heavy,
+      exSpec, mildSpec, heavySpec,
+      score: exSpec + mildSpec + heavySpec,
+    };
   });
 
   const totalUniqueLabels = LABEL_CARD_COUNT.size;
@@ -294,12 +303,16 @@ function renderOverlapAudit() {
   if (!panel) return;
 
   const stats = analyzeCardLabelSpecificity();
-  const maxTotal = Math.max(...stats.perCard.map(s => s.total));
+  // Bar widths are proportional to specificity contribution, not raw count.
+  // A card with 41 mostly-shared labels can have a shorter bar than a card
+  // with 16 exclusive labels, because the latter's max possible score is
+  // higher under the score-based hijacker.
+  const maxScore = Math.max(...stats.perCard.map(s => s.score));
 
   const rows = stats.perCard.map(s => {
-    const wEx = (s.exclusive / maxTotal * 100).toFixed(0);
-    const wMild = (s.mild / maxTotal * 100).toFixed(0);
-    const wHeavy = (s.heavy / maxTotal * 100).toFixed(0);
+    const wEx = (s.exSpec / maxScore * 100).toFixed(1);
+    const wMild = (s.mildSpec / maxScore * 100).toFixed(1);
+    const wHeavy = (s.heavySpec / maxScore * 100).toFixed(1);
     return `<div class="ov-row">
       <span class="ov-name">${s.card}</span>
       <span class="ov-bar">
@@ -307,7 +320,7 @@ function renderOverlapAudit() {
         <span class="ov-mild" style="width:${wMild}%"></span>
         <span class="ov-heavy" style="width:${wHeavy}%"></span>
       </span>
-      <span class="ov-total">${s.exclusive}/${s.total}</span>
+      <span class="ov-total">${s.score.toFixed(1)}</span>
     </div>`;
   }).join('');
 
@@ -319,8 +332,8 @@ function renderOverlapAudit() {
       ${stats.multiCardLabels} appear in 2+ cards<br>
       <span style="color:#5cb85c">exclusive</span> &middot;
       <span style="color:#f0ad4e">2-3 cards</span> &middot;
-      <span style="color:#d9534f">4+ cards</span> &middot;
-      counts show <em>exclusive / total</em>
+      <span style="color:#d9534f">4+ cards</span><br>
+      score = Σ(1/labelCount); bar width scales by score
     </div>`;
 }
 
