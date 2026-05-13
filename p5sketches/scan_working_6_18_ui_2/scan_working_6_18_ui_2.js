@@ -241,6 +241,25 @@ function modelReady() {
 // is meaningful — otherwise everything looks "skewed" by random noise.
 const MIN_TOTAL_FOR_DEVIATION_COLOR = 13;
 
+// Chi-squared critical values for df = 12 (one less than number of cards).
+// Hard-coded so we don't need a stats library to give a verdict. Anything
+// above CHI2_CRIT_005 means the distribution differs from uniform at
+// 95% confidence; the approximation needs expected count >= 5 per bin
+// (i.e. total >= 65) to be reliable.
+const CHI2_CRIT_005_DF12 = 21.026;
+const CHI2_RELIABLE_MIN_TOTAL = 65;
+
+function chiSquaredVsUniform(counts) {
+  const total = counts.reduce((a, b) => a + b, 0);
+  if (total === 0) return null;
+  const expected = total / counts.length;
+  const chi2 = counts.reduce(
+    (sum, count) => sum + Math.pow(count - expected, 2) / expected,
+    0
+  );
+  return { chi2, total, df: counts.length - 1 };
+}
+
 function deviationColor(count, expected, total) {
   if (total < MIN_TOTAL_FOR_DEVIATION_COLOR) return '#888';
   if (count === 0) return '#3a7bd5';                  // not seen — under
@@ -273,22 +292,33 @@ function renderFrequencyChart() {
     </div>`;
   }).join('');
 
-  // Legend only appears once coloring is active. Below the threshold the
-  // bars are all neutral gray, so a legend would just be noise.
-  const legend = total >= MIN_TOTAL_FOR_DEVIATION_COLOR
-    ? `<div class="freq-meta">expected per card: ${expected.toFixed(1)}<br>
+  // Legend + chi-squared block only appear once coloring is active.
+  let extras = '';
+  if (total >= MIN_TOTAL_FOR_DEVIATION_COLOR) {
+    const stat = chiSquaredVsUniform(counts);
+    const verdict = stat.chi2 > CHI2_CRIT_005_DF12
+      ? '<span style="color:#d9534f">significantly non-uniform</span> (p &lt; 0.05)'
+      : '<span style="color:#5cb85c">consistent with uniform</span> (p &gt; 0.05)';
+    const lowN = total < CHI2_RELIABLE_MIN_TOTAL
+      ? ` &middot; <em>low N, preliminary</em>`
+      : '';
+    extras = `
+      <div class="freq-meta">expected per card: ${expected.toFixed(1)}<br>
         <span style="color:#d9534f">over &gt;2.5&times;</span> &middot;
         <span style="color:#f0ad4e">over &gt;1.5&times;</span> &middot;
         <span style="color:#6cb2eb">under &lt;0.5&times;</span> &middot;
         <span style="color:#3a7bd5">unseen</span>
-      </div>`
-    : '';
+      </div>
+      <div class="freq-meta">χ² = ${stat.chi2.toFixed(2)} (df=${stat.df})${lowN}<br>
+        ${verdict}
+      </div>`;
+  }
 
   chart.innerHTML =
     '<h2>frequency (this reading)</h2>' +
     rows +
     `<div class="freq-meta">total: ${total} &middot; haze: ${haze}</div>` +
-    legend;
+    extras;
 }
 
 // CSV schema, versioned via the schema_version column so batch-compilation
