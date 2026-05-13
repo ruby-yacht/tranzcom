@@ -71,9 +71,10 @@ function setSpeechEnabled(on) {
 const MIN_CLASSIFY_INTERVAL_MS = 100;
 let lastClassifyMs = 0;
 
-// Ordered priority of cards — also drives the if/else fallthrough in hijacker().
-// First match wins, so cards earlier in this list are favored when MobileNet
-// label lists overlap. This is a known bias source; see todo.md Phase 1.
+// Canonical list of the 13 cards. Iteration order is no longer load-bearing
+// (hijacker scores all cards and picks by argmax with random tiebreak), but
+// the order is preserved here as the display/reference order used by the
+// frequency chart and overlap panel.
 const cards = [
   'eye', 'life', 'triangle', 'sun', 'mercury', 'venus', 'moon',
   'mars', 'jupiter', 'saturn', 'time', 'symmetry', 'infinity'
@@ -137,6 +138,19 @@ const CARD_LABELS = {
     310, 836, 794, 837, 772, 849, 512,
   ]),
 };
+
+// For each ImageNet label, how many of the 13 card sets contain it. Used by
+// the score-based hijacker() to weight rare labels more heavily than common
+// ones (label 488 in 1 card is more diagnostic than label 902 in 8 cards).
+const LABEL_CARD_COUNT = (() => {
+  const counts = new Map();
+  for (const card of cards) {
+    for (const label of CARD_LABELS[card]) {
+      counts.set(label, (counts.get(label) || 0) + 1);
+    }
+  }
+  return counts;
+})();
 
 // Ordered sequence of cards detected this session. Phase 2 (bias audit + SJSU
 // upload) needs sequence, not just counts; logged_cards is a Set and loses order.
@@ -250,38 +264,27 @@ const MIN_TOTAL_FOR_DEVIATION_COLOR = 13;
 const CHI2_CRIT_005_DF12 = 21.026;
 const CHI2_RELIABLE_MIN_TOTAL = 65;
 
-// Static analysis of CARD_LABELS. hijacker() walks `cards` in priority order
-// and returns the first card whose label set contains the ImageNet label —
-// so overlapping labels are always claimed by the earlier card. For each
-// card we count how many of its labels are "available" (not in any earlier
-// card's set) vs "stolen by earlier" (preempted in the priority order).
-function analyzeCardLabelOverlap() {
-  const labelCardCounts = new Map(); // label -> how many cards' sets contain it
-  for (const card of cards) {
-    for (const label of CARD_LABELS[card]) {
-      labelCardCounts.set(label, (labelCardCounts.get(label) || 0) + 1);
-    }
-  }
-
-  const claimed = new Set();
+// Per-card label specificity breakdown. Labels are tiered by how many cards
+// they appear in: 1 (exclusive — most diagnostic), 2-3 (mild share), 4+
+// (heavy share). A card with mostly exclusive labels is easy to distinguish;
+// one dominated by heavy-share labels has weaker signal in the new score-
+// based hijacker.
+function analyzeCardLabelSpecificity() {
   const perCard = cards.map(card => {
     const set = CARD_LABELS[card];
-    let stolen = 0;
+    let exclusive = 0, mild = 0, heavy = 0;
     for (const label of set) {
-      if (claimed.has(label)) stolen++;
+      const n = LABEL_CARD_COUNT.get(label);
+      if (n === 1) exclusive++;
+      else if (n <= 3) mild++;
+      else heavy++;
     }
-    for (const label of set) claimed.add(label);
-    return {
-      card,
-      total: set.size,
-      available: set.size - stolen,
-      stolen,
-    };
+    return { card, total: set.size, exclusive, mild, heavy };
   });
 
-  const totalUniqueLabels = labelCardCounts.size;
+  const totalUniqueLabels = LABEL_CARD_COUNT.size;
   let multiCardLabels = 0;
-  for (const c of labelCardCounts.values()) if (c > 1) multiCardLabels++;
+  for (const c of LABEL_CARD_COUNT.values()) if (c > 1) multiCardLabels++;
 
   return { totalUniqueLabels, multiCardLabels, perCard };
 }
@@ -290,31 +293,34 @@ function renderOverlapAudit() {
   const panel = document.getElementById('overlap_panel');
   if (!panel) return;
 
-  const stats = analyzeCardLabelOverlap();
+  const stats = analyzeCardLabelSpecificity();
   const maxTotal = Math.max(...stats.perCard.map(s => s.total));
 
   const rows = stats.perCard.map(s => {
-    const availPct = (s.available / maxTotal * 100).toFixed(0);
-    const stolenPct = (s.stolen / maxTotal * 100).toFixed(0);
+    const wEx = (s.exclusive / maxTotal * 100).toFixed(0);
+    const wMild = (s.mild / maxTotal * 100).toFixed(0);
+    const wHeavy = (s.heavy / maxTotal * 100).toFixed(0);
     return `<div class="ov-row">
       <span class="ov-name">${s.card}</span>
       <span class="ov-bar">
-        <span class="ov-avail" style="width:${availPct}%"></span>
-        <span class="ov-stolen" style="width:${stolenPct}%"></span>
+        <span class="ov-ex" style="width:${wEx}%"></span>
+        <span class="ov-mild" style="width:${wMild}%"></span>
+        <span class="ov-heavy" style="width:${wHeavy}%"></span>
       </span>
-      <span class="ov-total">${s.available}/${s.total}</span>
+      <span class="ov-total">${s.exclusive}/${s.total}</span>
     </div>`;
   }).join('');
 
   panel.innerHTML =
-    '<h2>hijacker overlap (priority bias)</h2>' +
+    '<h2>label specificity</h2>' +
     rows +
     `<div class="ov-meta">
       ${stats.totalUniqueLabels} unique labels &middot;
       ${stats.multiCardLabels} appear in 2+ cards<br>
-      <span style="color:#5cb85c">available</span> /
-      <span style="color:#d9534f">stolen by earlier card</span> &middot;
-      counts show <em>available / total</em>
+      <span style="color:#5cb85c">exclusive</span> &middot;
+      <span style="color:#f0ad4e">2-3 cards</span> &middot;
+      <span style="color:#d9534f">4+ cards</span> &middot;
+      counts show <em>exclusive / total</em>
     </div>`;
 }
 
@@ -445,14 +451,33 @@ function saveDataToFile() {
   a.click();
   document.body.removeChild(a);
 }
+// Score-based card selection. For each top-K result, every card whose label
+// set contains that label gets credit weighted by (confidence × specificity),
+// where specificity = 1 / (number of cards containing that label). Argmax
+// wins, with random tiebreak so ties don't fall back to priority order.
+// Cards already in logged_cards are excluded so the reading advances rather
+// than stalling on the same card; that's a reading-construction concern,
+// not a bias-introducing one (the bias was the first-match if/else).
 function hijacker(results) {
-  const label = results[0].label;
-  for (const card of cards) {
-    if (CARD_LABELS[card].has(label) && !logged_cards.has(card)) {
-      return card;
+  const scores = new Map();
+  for (const r of results) {
+    const labelCount = LABEL_CARD_COUNT.get(r.label);
+    if (!labelCount) continue;
+    const contribution = r.confidence * (1 / labelCount);
+    for (const card of cards) {
+      if (logged_cards.has(card)) continue;
+      if (CARD_LABELS[card].has(r.label)) {
+        scores.set(card, (scores.get(card) || 0) + contribution);
+      }
     }
   }
-  return 'haze';
+  if (scores.size === 0) return 'haze';
+
+  let maxScore = -Infinity;
+  for (const s of scores.values()) if (s > maxScore) maxScore = s;
+  const winners = [];
+  for (const [card, s] of scores) if (s === maxScore) winners.push(card);
+  return winners[Math.floor(Math.random() * winners.length)];
 }
 
 function gotResult(err, results = []) {
