@@ -8,13 +8,30 @@ This example uses a callback pattern to create the classifier
 === */
 let classifier;
 let video;
-//const myVoice = new p5.Speech();
+const myVoice = new p5.Speech();
 let data = {};
 let stream_status = false;
 let is_quick = false;
 let is_sequential = false;
 let logged_cards = new Set();
 let cards_list = [];
+
+// Accessibility: speech is OFF by default. Toggled via the page checkbox.
+// When turned off mid-reading, any in-flight utterance is cancelled so the
+// reader is silenced immediately.
+let speechEnabled = false;
+function setSpeechEnabled(on) {
+  speechEnabled = !!on;
+  if (!speechEnabled && window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
+}
+
+// Minimum gap between classifications. Caps inference rate on fast machines
+// so frequency stats are comparable across devices. Slow machines naturally
+// run slower (next classify only fires after the previous gotResult returns).
+const MIN_CLASSIFY_INTERVAL_MS = 100;
+let lastClassifyMs = 0;
 let cards = [
   'eye', 'life', 'triangle', 'sun', 'mercury', 'venus', 'moon',
   'mars', 'jupiter', 'saturn', 'time', 'symmetry', 'infinity'
@@ -40,6 +57,10 @@ function setup() {
     button.size(100, 40);
     button.mousePressed(btn.handler);
   });
+
+  let speechToggle = createCheckbox('Speech (accessibility)', false);
+  speechToggle.position(600, 360);
+  speechToggle.changed(() => setSpeechEnabled(speechToggle.checked()));
 
   describeButtons();
 }
@@ -79,20 +100,6 @@ function run_cam() {
 function modelReady() {
   select('#status').html('Model Loaded');
   classifyVideo();
-}
-
-function startLoop() {
-  const loopInterval = setInterval(() => {
-    if (!stream_status) {
-      clearInterval(loopInterval);
-    } else {
-      classifier.classify(gotResult);
-    }
-  }, 100); // Run every 100 ms (adjust the interval as needed)
-}
-
-function classifyVideo() {
-  startLoop();
 }
 
 function wait(time) {
@@ -280,8 +287,11 @@ function gotResult(err, results = []) {
     }
   }
 
-  if (stream_status && cards.includes(hijack)) {
-  //  myVoice.speak(`I see ${hijack}`);
+  // hijacker() returns a real card name only on first detection of that card
+  // this session (already-logged cards are guarded inside hijacker), so this
+  // branch fires exactly when a new card is about to be added to the reading.
+  if (stream_status && speechEnabled && cards.includes(hijack)) {
+    myVoice.speak(`I see ${hijack}`);
   }
 
   if (cards.includes(hijack)) {
@@ -313,11 +323,19 @@ function stop_cam() {
   is_sequential = false;
   logged_cards.clear();
   cards_list = [];
-  myVoice.speak('');
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
 }
 
 function classifyVideo() {
-  if (stream_status) {
+  if (!stream_status) return;
+  const now = millis();
+  const elapsed = now - lastClassifyMs;
+  if (elapsed >= MIN_CLASSIFY_INTERVAL_MS) {
+    lastClassifyMs = now;
     classifier.classify(gotResult);
+  } else {
+    setTimeout(classifyVideo, MIN_CLASSIFY_INTERVAL_MS - elapsed);
   }
 }
