@@ -163,9 +163,13 @@ function setup() {
     button.mousePressed(btn.handler);
   });
 
-  let speechToggle = createCheckbox('Speech (accessibility)', false);
-  speechToggle.position(600, 360);
-  speechToggle.changed(() => setSpeechEnabled(speechToggle.checked()));
+  let speechButton = createButton('Speech: off');
+  speechButton.position(600, 350);
+  speechButton.size(100, 40);
+  speechButton.mousePressed(() => {
+    setSpeechEnabled(!speechEnabled);
+    speechButton.html(`Speech: ${speechEnabled ? 'on' : 'off'}`);
+  });
 
   describeButtons();
 }
