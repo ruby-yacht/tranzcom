@@ -235,10 +235,22 @@ function modelReady() {
   classifyVideo();
 }
 
-// Live horizontal-bar chart of per-card detection counts. Reads from `data`
-// (the per-frame hijacker() output tally) and renders into #frequency_chart.
-// Foundation for Phase 1's under-/over-representation work; we keep the
-// presentation neutral for now and let the user eyeball distribution.
+// Live horizontal-bar chart of per-card detection counts. Bars are colored
+// by how each card's count compares to the uniform expectation (total / 13),
+// but only once we have enough total observations that uniform expectation
+// is meaningful — otherwise everything looks "skewed" by random noise.
+const MIN_TOTAL_FOR_DEVIATION_COLOR = 13;
+
+function deviationColor(count, expected, total) {
+  if (total < MIN_TOTAL_FOR_DEVIATION_COLOR) return '#888';
+  if (count === 0) return '#3a7bd5';                  // not seen — under
+  const ratio = count / expected;
+  if (ratio > 2.5) return '#d9534f';                  // strongly over
+  if (ratio > 1.5) return '#f0ad4e';                  // mildly over
+  if (ratio < 0.5) return '#6cb2eb';                  // mildly under
+  return '#888';                                      // ~uniform
+}
+
 function renderFrequencyChart() {
   const chart = document.getElementById('frequency_chart');
   if (!chart) return;
@@ -247,22 +259,36 @@ function renderFrequencyChart() {
   const total = counts.reduce((a, b) => a + b, 0);
   const haze = data['haze'] || 0;
   const maxCount = Math.max(1, ...counts);
+  const expected = total / cards.length;
 
   const rows = cards.map((card, i) => {
     const count = counts[i];
     const pct = total > 0 ? (count / total * 100).toFixed(1) : '0.0';
     const barWidth = (count / maxCount * 100).toFixed(0);
+    const color = deviationColor(count, expected, total);
     return `<div class="freq-row">
       <span class="freq-name">${card}</span>
-      <span class="freq-bar"><span style="width:${barWidth}%"></span></span>
+      <span class="freq-bar"><span style="width:${barWidth}%;background:${color}"></span></span>
       <span class="freq-count">${count} (${pct}%)</span>
     </div>`;
   }).join('');
 
+  // Legend only appears once coloring is active. Below the threshold the
+  // bars are all neutral gray, so a legend would just be noise.
+  const legend = total >= MIN_TOTAL_FOR_DEVIATION_COLOR
+    ? `<div class="freq-meta">expected per card: ${expected.toFixed(1)}<br>
+        <span style="color:#d9534f">over &gt;2.5&times;</span> &middot;
+        <span style="color:#f0ad4e">over &gt;1.5&times;</span> &middot;
+        <span style="color:#6cb2eb">under &lt;0.5&times;</span> &middot;
+        <span style="color:#3a7bd5">unseen</span>
+      </div>`
+    : '';
+
   chart.innerHTML =
     '<h2>frequency (this reading)</h2>' +
     rows +
-    `<div class="freq-row freq-meta">total: ${total} &middot; haze: ${haze}</div>`;
+    `<div class="freq-meta">total: ${total} &middot; haze: ${haze}</div>` +
+    legend;
 }
 
 // CSV schema, versioned via the schema_version column so batch-compilation
