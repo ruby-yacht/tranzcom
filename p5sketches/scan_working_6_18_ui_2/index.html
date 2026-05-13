@@ -16,6 +16,47 @@
       padding: 0;
       margin: 0;
     }
+    #frequency_chart {
+      position: absolute;
+      top: 250px;
+      left: 760px;
+      width: 360px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    #frequency_chart h2 {
+      font-size: 13px;
+      margin: 0 0 6px;
+    }
+    .freq-row {
+      display: flex;
+      align-items: center;
+      margin: 2px 0;
+    }
+    .freq-name {
+      width: 70px;
+      text-align: right;
+      padding-right: 8px;
+    }
+    .freq-bar {
+      flex: 1;
+      height: 12px;
+      background: #eee;
+      max-width: 180px;
+    }
+    .freq-bar > span {
+      display: block;
+      height: 100%;
+      background: #888;
+    }
+    .freq-count {
+      width: 90px;
+      padding-left: 8px;
+    }
+    .freq-meta {
+      margin-top: 6px;
+      color: #555;
+    }
   </style>
 </head>
 
@@ -27,6 +68,10 @@
     <br />with a confidence of <span id="probability">...</span>.
     <br />Cards Logged: <span id="logged_cards">...</span>.
   </p>
+  <div id="frequency_chart">
+    <h2>frequency (this reading)</h2>
+    <div class="freq-meta">no data yet</div>
+  </div>
 </body>
 
 </html>

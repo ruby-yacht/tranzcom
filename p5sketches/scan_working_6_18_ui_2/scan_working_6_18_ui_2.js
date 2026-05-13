@@ -201,6 +201,7 @@ function run_cam_3() {
 function run_cam() {
   stream_status = true;
   data = {};
+  renderFrequencyChart();
   console.log('running camera!!!!');
   classifier = ml5.imageClassifier('MobileNet', video, modelReady);
 }
@@ -208,6 +209,36 @@ function run_cam() {
 function modelReady() {
   select('#status').html('Model Loaded');
   classifyVideo();
+}
+
+// Live horizontal-bar chart of per-card detection counts. Reads from `data`
+// (the per-frame hijacker() output tally) and renders into #frequency_chart.
+// Foundation for Phase 1's under-/over-representation work; we keep the
+// presentation neutral for now and let the user eyeball distribution.
+function renderFrequencyChart() {
+  const chart = document.getElementById('frequency_chart');
+  if (!chart) return;
+
+  const counts = cards.map(c => data[c] || 0);
+  const total = counts.reduce((a, b) => a + b, 0);
+  const haze = data['haze'] || 0;
+  const maxCount = Math.max(1, ...counts);
+
+  const rows = cards.map((card, i) => {
+    const count = counts[i];
+    const pct = total > 0 ? (count / total * 100).toFixed(1) : '0.0';
+    const barWidth = (count / maxCount * 100).toFixed(0);
+    return `<div class="freq-row">
+      <span class="freq-name">${card}</span>
+      <span class="freq-bar"><span style="width:${barWidth}%"></span></span>
+      <span class="freq-count">${count} (${pct}%)</span>
+    </div>`;
+  }).join('');
+
+  chart.innerHTML =
+    '<h2>frequency (this reading)</h2>' +
+    rows +
+    `<div class="freq-row freq-meta">total: ${total} &middot; haze: ${haze}</div>`;
 }
 
 function saveDataToFile() {
@@ -268,6 +299,7 @@ function gotResult(err, results = []) {
     } else {
       data[hijack] = 1;
     }
+    renderFrequencyChart();
   }
 
   // hijacker() returns a real card name only on first detection of that card
